@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:untherimeair_flutter/models/annonce.dart';
+import 'package:untherimeair_flutter/models/annonce_modele.dart';
+
+import '../screens/annonce_screen.dart';
 
 class AnnonceWidget extends StatelessWidget {
   final Annonce annonce;
@@ -8,47 +10,42 @@ class AnnonceWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              annonce.titre,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AnnonceScreen(annonce: annonce),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.all(16.0),
+        child: Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Titre de l'annonce
+                Text(
+                  annonce.titre,
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+                // Lieu de l'annonce
+                Text(
+                  '${annonce.metierCible} à ${annonce.ville}',
+                  style: const TextStyle(fontSize: 18),
+                ),
+                const SizedBox(height: 16),
+                // Date de publication de l'annonce
+                Text(
+                  'Offre publiée il y a plus de ${DateTime.now().difference(annonce.datePublication).inDays} jours',
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ],
             ),
-            SizedBox(height: 8),
-            Text(
-              'Description: ${annonce.description}',
-              style: TextStyle(fontSize: 16),
-            ),
-            SizedBox(height: 4),
-            Text(
-              'Début: ${annonce.dateDebut}',
-              style: TextStyle(fontSize: 16),
-            ),
-            Text(
-              'Fin: ${annonce.dateFin}',
-              style: TextStyle(fontSize: 16),
-            ),
-            Text(
-              'Date de publication: ${annonce.datePublication}',
-              style: TextStyle(fontSize: 16),
-            ),
-            Text(
-              'Emplacement: ${annonce.emplacement}',
-              style: TextStyle(fontSize: 16),
-            ),
-            Text(
-              'Métier cible: ${annonce.metierCible}',
-              style: TextStyle(fontSize: 16),
-            ),
-            Text(
-              'Rémunération: ${annonce.remuneration}€',
-              style: TextStyle(fontSize: 16),
-            ),
-          ],
+          ),
         ),
       ),
     );
