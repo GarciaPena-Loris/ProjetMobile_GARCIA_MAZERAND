@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "278290578074",
+    "project_id": "untherimeair",
+    "storage_bucket": "untherimeair.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:278290578074:android:ac4d058475e6537f4efd23",
+        "android_client_info": {
+          "package_name": "m1.devmobile.untherimeair_flutter"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDp4HiY9IX-iWL2K-5fTUAwvRdMRYNVjWs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
