@@ -1,22 +1,24 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:untherimeair_flutter/screens/profil_screen.dart';
+import 'package:untherimeair_flutter/widgets/search_widget.dart';
 
 import '../models/annonce_modele.dart';
 import '../services/annonce_service.dart';
 import '../widgets/annonce_widget.dart';
-import 'package:untherimeair_flutter/widgets/search_widget.dart';
 
 import 'auth_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final AnnonceService _annonceService = AnnonceService();
 
+  HomeScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Un Thé Rime Air'),
+        title: const Text('Un Thé Rime Air'),
         actions: [
           StreamBuilder<User?>(
             stream: FirebaseAuth.instance.authStateChanges(),
@@ -24,8 +26,8 @@ class HomeScreen extends StatelessWidget {
               if (snapshot.hasData) {
                 // Si l'utilisateur est connecté, affichez "Profil" avec une icône d'utilisateur
                 return TextButton.icon(
-                  icon: Icon(Icons.person), // Icône d'utilisateur
-                  label: Text('Profil'),
+                  icon: const Icon(Icons.person), // Icône d'utilisateur
+                  label: const Text('Profil'),
                   onPressed: () {
                     // Redirection vers l'écran de profil
                     Navigator.push(
@@ -37,8 +39,8 @@ class HomeScreen extends StatelessWidget {
               } else {
                 // Si l'utilisateur n'est pas connecté, affichez "Connexion" avec une icône de connexion
                 return TextButton.icon(
-                  icon: Icon(Icons.person), // Icône de connexion
-                  label: Text('Connexion'),
+                  icon: const Icon(Icons.person), // Icône de connexion
+                  label: const Text('Connexion'),
                   onPressed: () {
                     // Redirection vers l'écran d'authentification
                     Navigator.push(
@@ -56,10 +58,25 @@ class HomeScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: EdgeInsets.all(16.0),
-            child: SearchWidget(
-              onSearch: (arg1, arg2, arg3) {
-                // Ajoutez la logique de recherche ici
+            padding: const EdgeInsets.all(16.0),
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.search), // Icône de recherche
+              label: const Text('Rechercher'),
+              onPressed: () {
+                WidgetsBinding.instance!.addPostFrameCallback((_) {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    builder: (context) => FractionallySizedBox(
+                      heightFactor: 0.7,
+                      child: Search(
+                        onSearch: (arg1, arg2, arg3) {
+                          // Ajoutez la logique de recherche ici
+                        },
+                      ),
+                    ),
+                  );
+                });
               },
             ),
           ),
@@ -68,9 +85,9 @@ class HomeScreen extends StatelessWidget {
               stream: _annonceService.getAnnonces(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
+                  return const Center(child: CircularProgressIndicator());
                 } else if (snapshot.hasError) {
-                  return Center(
+                  return const Center(
                       child: Text('Erreur de chargement des annonces'));
                 } else {
                   List<Annonce> annonces = snapshot.data ?? [];

@@ -5,7 +5,7 @@ import 'package:untherimeair_flutter/services/auth_service.dart';
 class SignInForm extends StatefulWidget {
   final AuthService authService;
 
-  SignInForm({required this.authService});
+  const SignInForm({super.key, required this.authService});
 
   @override
   _SignInFormState createState() => _SignInFormState();
@@ -19,15 +19,24 @@ class _SignInFormState extends State<SignInForm> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(16.0),
       child: Form(
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            const Text(
+              'Connectez-vous à votre compte',
+              style: TextStyle(fontSize: 12.0, color: Colors.grey),
+            ),
+            const SizedBox(height: 16.0),
+
             TextFormField(
               controller: _emailController,
-              decoration: InputDecoration(labelText: 'E-mail'),
+              decoration: const InputDecoration(
+                labelText: 'E-mail',
+                prefixIcon: Icon(Icons.email),
+              ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Veuillez entrer votre adresse e-mail';
@@ -41,9 +50,14 @@ class _SignInFormState extends State<SignInForm> {
                 return null;
               },
             ),
+            const SizedBox(height: 16.0),
+
             TextFormField(
               controller: _passwordController,
-              decoration: InputDecoration(labelText: 'Mot de passe'),
+              decoration: const InputDecoration(
+                labelText: 'Mot de passe',
+                prefixIcon: Icon(Icons.lock),
+              ),
               obscureText: true,
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -56,6 +70,8 @@ class _SignInFormState extends State<SignInForm> {
                 return null;
               },
             ),
+            const SizedBox(height: 16.0),
+
             ElevatedButton(
               onPressed: () async {
                 if (_formKey.currentState!.validate()) {
@@ -71,12 +87,12 @@ class _SignInFormState extends State<SignInForm> {
                     Navigator.pushNamed(context, '/home');
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Erreur lors de la connexion')),
+                      const SnackBar(content: Text('Erreur lors de la connexion')),
                     );
                   }
                 }
               },
-              child: Text('Se Connecter'),
+              child: const Text('Se Connecter'),
             ),
           ],
         ),

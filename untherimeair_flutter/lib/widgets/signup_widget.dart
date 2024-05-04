@@ -1,16 +1,20 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:untherimeair_flutter/screens/home_screen.dart';
 import 'package:untherimeair_flutter/services/utilisateur_service.dart';
 
 import '../models/utilisateur_modele.dart';
+import 'package:file_picker/file_picker.dart';
 import '../services/auth_service.dart';
 
 class SignUpForm extends StatefulWidget {
   final AuthService authService;
 
-  SignUpForm({required this.authService});
+  const SignUpForm({super.key, required this.authService});
 
   @override
   _SignUpFormState createState() => _SignUpFormState();
@@ -18,6 +22,10 @@ class SignUpForm extends StatefulWidget {
 
 class _SignUpFormState extends State<SignUpForm> {
   final _formKey = GlobalKey<FormState>();
+  File? _cvFile;
+
+  // Variable pour vérifier si tous les champs obligatoires sont remplis
+  bool _isFormFilled = false;
 
   // Les contrôleurs pour les champs de texte
   final TextEditingController _nomController = TextEditingController();
@@ -49,6 +57,27 @@ class _SignUpFormState extends State<SignUpForm> {
         _dateDeNaissance = picked;
       });
     }
+  }
+
+  // Fonction pour vérifier si tous les champs obligatoires sont remplis
+  void _checkFormFilled() {
+    setState(() {
+      _isFormFilled = _nomController.text.isNotEmpty &&
+          _prenomController.text.isNotEmpty &&
+          _mailController.text.isNotEmpty &&
+          _motDePasseController.text.isNotEmpty &&
+          _dateDeNaissance != null;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Écouteurs aux contrôleurs de texte pour les champs obligatoires
+    _nomController.addListener(_checkFormFilled);
+    _prenomController.addListener(_checkFormFilled);
+    _mailController.addListener(_checkFormFilled);
+    _motDePasseController.addListener(_checkFormFilled);
   }
 
   // Fonction pour valider et soumettre le formulaire d'inscription
@@ -129,25 +158,38 @@ class _SignUpFormState extends State<SignUpForm> {
     return Form(
       key: _formKey,
       child: ListView(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         children: [
+          const Text(
+            'Inscrivez-vous pour pouvoir postuler à des missions',
+            style: TextStyle(fontSize: 12.0, color: Colors.grey),
+          ),
+          const SizedBox(height: 16.0),
+
           // Champ de texte pour le nom
           TextFormField(
             controller: _nomController,
-            decoration: InputDecoration(labelText: 'Nom'),
+            decoration: const InputDecoration(
+              labelText: 'Nom *',
+              hintText: 'Votre nom de famille',
+              prefixIcon: Icon(Icons.badge),
+            ),
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Veuillez entrer votre nom';
+                return 'Michel...';
               }
               return null;
             },
           ),
-          SizedBox(height: 16.0),
+          const SizedBox(height: 16.0),
 
           // Champ de texte pour le prénom
           TextFormField(
             controller: _prenomController,
-            decoration: InputDecoration(labelText: 'Prénom'),
+            decoration: const InputDecoration(
+                labelText: 'Prénom *',
+                hintText: 'Martin...',
+                prefixIcon: Icon(Icons.badge)),
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Veuillez entrer votre prénom';
@@ -155,12 +197,32 @@ class _SignUpFormState extends State<SignUpForm> {
               return null;
             },
           ),
-          SizedBox(height: 16.0),
+          const SizedBox(height: 16.0),
+
+          // Champ pour la date de naissance (sélectionnée à l'aide d'un DatePicker)
+          InkWell(
+            onTap: () => _choisirDateDeNaissance(context),
+            child: InputDecorator(
+              decoration: const InputDecoration(
+                labelText: 'Date de naissance *',
+                hintText: 'Age minimum: 18 ans',
+                prefixIcon: Icon(Icons.calendar_today), // Icône de calendrier
+              ),
+              child: _dateDeNaissance == null
+                  ? const Text('')
+                  : Text(DateFormat('d MMMM yyyy', 'fr_FR').format(
+                  _dateDeNaissance!)), // Formattez la date de naissance en français
+            ),
+          ),
+          const SizedBox(height: 16.0),
 
           // Champ de texte pour l'adresse e-mail
           TextFormField(
             controller: _mailController,
-            decoration: InputDecoration(labelText: 'Adresse e-mail'),
+            decoration: const InputDecoration(
+                labelText: 'Adresse e-mail *',
+                hintText: 'user@mail.fr',
+                prefixIcon: Icon(Icons.email)),
             keyboardType: TextInputType.emailAddress,
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -175,12 +237,15 @@ class _SignUpFormState extends State<SignUpForm> {
               return null;
             },
           ),
-          SizedBox(height: 16.0),
+          const SizedBox(height: 16.0),
 
           // Champ de texte pour le mot de passe
           TextFormField(
             controller: _motDePasseController,
-            decoration: InputDecoration(labelText: 'Mot de passe'),
+            decoration: const InputDecoration(
+                labelText: 'Mot de passe *',
+                hintText: '6 caractères minimum',
+                prefixIcon: Icon(Icons.lock)),
             obscureText: true,
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -193,67 +258,105 @@ class _SignUpFormState extends State<SignUpForm> {
               return null;
             },
           ),
-          SizedBox(height: 16.0),
+          const SizedBox(height: 16.0),
 
           // Champ de texte pour le téléphone
           TextFormField(
             controller: _telephoneController,
-            decoration: InputDecoration(labelText: 'Téléphone'),
+            decoration: const InputDecoration(
+                labelText: 'Téléphone',
+                hintText: '0123456789',
+                prefixIcon: Icon(Icons.phone)),
             keyboardType: TextInputType.phone,
           ),
-          SizedBox(height: 16.0),
+          const SizedBox(height: 16.0),
 
           // Champ de texte pour la ville
           TextFormField(
             controller: _villeController,
-            decoration: InputDecoration(labelText: 'Ville'),
+            decoration: const InputDecoration(
+                labelText: 'Ville',
+                hintText: 'Ville de résidence',
+                prefixIcon: Icon(Icons.location_city)),
           ),
-          SizedBox(height: 16.0),
+          const SizedBox(height: 16.0),
 
           // Champ de texte pour la nationalité
           TextFormField(
             controller: _nationaliteController,
-            decoration: InputDecoration(labelText: 'Nationalité'),
+            decoration: const InputDecoration(
+                labelText: 'Nationalité',
+                hintText: 'Nationalité',
+                prefixIcon: Icon(Icons.flag)),
           ),
-          SizedBox(height: 16.0),
+          const SizedBox(height: 16.0),
 
-          // Champ de texte pour le commentaire
           TextFormField(
             controller: _commentaireController,
-            decoration: InputDecoration(labelText: 'Commentaire'),
+            decoration: const InputDecoration(
+              labelText: 'Informations complémentaires',
+              hintText: '',
+              prefixIcon: Icon(Icons.comment),
+            ),
+            maxLines: 5, // Permet au champ de texte de s'étendre sur 5 lignes
           ),
-          SizedBox(height: 16.0),
 
-          // Champ de texte pour le CV
-          TextFormField(
-            controller: _cvController,
-            decoration: InputDecoration(labelText: 'Chemin vers le CV'),
-          ),
-          SizedBox(height: 16.0),
+          // Champ pour le CV
+          Card(
+            color: _cvFile != null ? Colors.lightGreenAccent : null,
+            // Change la couleur en vert si un fichier est sélectionné
+            child: ListTile(
+              leading: const Icon(Icons.description), // Icône 'description'
+              title: Text(_cvController.text.isEmpty
+                  ? 'Sélectionnez votre CV'
+                  : _cvController.text), // Texte
+              trailing: _cvFile !=
+                      null // Si un fichier est sélectionné, affiche une icône de croix pour supprimer le fichier
+                  ? IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        setState(() {
+                          _cvFile = null;
+                          _cvController.clear();
+                        });
+                      },
+                    )
+                  : null,
+              onTap: () async {
+                FilePickerResult? result =
+                    await FilePicker.platform.pickFiles();
 
-          // Champ pour la date de naissance (sélectionnée à l'aide d'un DatePicker)
-          InkWell(
-            onTap: () => _choisirDateDeNaissance(context),
-            child: InputDecorator(
-              decoration: InputDecoration(
-                labelText: 'Date de naissance',
-                hintText: 'Sélectionnez votre date de naissance',
-              ),
-              child: _dateDeNaissance == null
-                  ? Text('')
-                  : Text(
-                      '${_dateDeNaissance!.day}/${_dateDeNaissance!.month}/${_dateDeNaissance!.year}'),
+                if (result != null) {
+                  _cvFile = File(result.files.single.path!);
+                  // Utilisez la propriété 'name' pour obtenir le nom du fichier
+                  setState(() {
+                    _cvController.text = result.files.single.name;
+                  });
+                } else {
+                  // User canceled the picker
+                }
+              },
             ),
           ),
-          SizedBox(height: 16.0),
+          const SizedBox(height: 16.0),
 
           // Bouton de soumission du formulaire d'inscription
           ElevatedButton(
-            onPressed: _validerEtSoumettre,
-            child: Text('S\'inscrire'),
+            onPressed: _isFormFilled ? _validerEtSoumettre : null,
+            child: const Text('S\'inscrire'),
           ),
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    // Supprimez les écouteurs lorsque le widget est supprimé
+    _nomController.removeListener(_checkFormFilled);
+    _prenomController.removeListener(_checkFormFilled);
+    _mailController.removeListener(_checkFormFilled);
+    _motDePasseController.removeListener(_checkFormFilled);
+    super.dispose();
   }
 }

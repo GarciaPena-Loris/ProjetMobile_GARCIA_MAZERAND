@@ -1,55 +1,99 @@
 import 'package:flutter/material.dart';
-import 'package:untherimeair_flutter/widgets/search_dialog_widget.dart';
 
-class SearchWidget extends StatefulWidget {
+class Search extends StatefulWidget {
   final Function(String, String, double) onSearch;
 
-  const SearchWidget({Key? key, required this.onSearch}) : super(key: key);
+  const Search({super.key, required this.onSearch});
 
   @override
-  _SearchWidgetState createState() => _SearchWidgetState();
+  _SearchState createState() => _SearchState();
 }
 
-class _SearchWidgetState extends State<SearchWidget> {
+class _SearchState extends State<Search> {
   double _distance = 0.0;
+  final _iconWork = const Icon(Icons.work);
+  final _iconLocationCity = const Icon(Icons.location_city);
+  late final _searchFormFieldMetier;
+  late final _searchFormFieldVille;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchFormFieldMetier = _buildSearchFormField(_iconWork, 'Métier cible');
+    _searchFormFieldVille = _buildSearchFormField(_iconLocationCity, 'Ville');
+  }
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () {
-        _showSearchDialog(context);
-      },
-      child: Container(
-        padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8.0),
-          color: Colors.grey[200],
-        ),
-        child: const Row(
-          children: [
-            Icon(Icons.search),
-            SizedBox(width: 8.0),
-            Text('Rechercher...'),
-          ],
-        ),
+    return Padding(
+      padding: const EdgeInsets.all(32.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Recherche de missions',
+            style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 18.0),
+          const Text(
+            'Sélectionnez vos critères de recherche :',
+            style: TextStyle(fontSize: 12.0, color: Colors.grey),
+          ),
+          _searchFormFieldMetier,
+          _searchFormFieldVille,
+          const SizedBox(height: 16.0),
+          Row(
+            children: [
+              const Icon(Icons.location_on),
+              const SizedBox(width: 8.0),
+              Expanded(
+                child: Slider(
+                  value: _distance,
+                  min: 0.0,
+                  max: 100.0,
+                  divisions: 150,
+                  label: 'Distance: ${_distance.round()} km',
+                  onChanged: (value) {
+                    setState(() {
+                      _distance = value;
+                    });
+                  },
+                ),
+              ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text('Fermer'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  widget.onSearch('métier', 'ville', _distance);
+                  Navigator.pop(context);
+                },
+                child: const Text('Rechercher'),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
-  void _showSearchDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => SearchDialog(onSearch: widget.onSearch),
-    );
-  }
-
-  Widget _buildSearchFormField(IconData icon, String labelText) {
+  Widget _buildSearchFormField(Icon icon, String labelText) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8.0),
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         children: [
-          Icon(icon),
-          SizedBox(width: 8.0),
+          icon,
+          const SizedBox(width: 8.0),
           Expanded(
             child: TextFormField(
               decoration: InputDecoration(
