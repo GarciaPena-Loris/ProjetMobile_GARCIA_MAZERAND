@@ -32,7 +32,7 @@ class HomeScreen extends StatelessWidget {
                     // Redirection vers l'écran de profil
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => ProfilScreen()),
+                      MaterialPageRoute(builder: (context) => const ProfilScreen()),
                     );
                   },
                 );

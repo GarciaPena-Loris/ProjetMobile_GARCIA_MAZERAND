@@ -1,9 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Utilisateur {
-  final int idUtilisateur;
+  final String idUtilisateur;
   final String mail;
-  final String motDePasse;
   final String nom;
   final String prenom;
   final DateTime dateDeNaissance;
@@ -16,7 +15,6 @@ class Utilisateur {
   Utilisateur({
     required this.idUtilisateur,
     required this.mail,
-    required this.motDePasse,
     required this.nom,
     required this.prenom,
     required this.dateDeNaissance,
@@ -31,9 +29,8 @@ class Utilisateur {
   factory Utilisateur.fromFirestore(DocumentSnapshot doc) {
     Map data = doc.data() as Map;
     return Utilisateur(
-      idUtilisateur: data['idUtilisateur'] ?? 0,
+      idUtilisateur: data['idUtilisateur'] ?? "0",
       mail: data['mail'] ?? '',
-      motDePasse: data['motDePasse'] ?? '',
       nom: data['nom'] ?? '',
       prenom: data['prenom'] ?? '',
       dateDeNaissance: (data['dateDeNaissance'] as Timestamp).toDate(),

@@ -1,10 +1,16 @@
+import 'dart:io';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:untherimeair_flutter/models/utilisateur_modele.dart';
 
 class UtilisateurService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance; // Instance de FirebaseAuth
+  final FirebaseFirestore _firestore =
+      FirebaseFirestore.instance; // Instance de Firestore
+  final FirebaseStorage _storage =
+      FirebaseStorage.instance; // Instance de FirebaseStorage
 
   // Inscription d'un nouvel utilisateur
   Future<Utilisateur?> inscrireUtilisateur({
@@ -16,12 +22,14 @@ class UtilisateurService {
     required String ville,
     required String nationalite,
     required String commentaire,
-    required String cv,
+    required File? cv,
     required Timestamp dateDeNaissance,
   }) async {
+    UserCredential? result; // Déclaration de result en dehors du bloc try
+
     try {
       // Crée un nouvel utilisateur dans Firebase Authentication
-      UserCredential result = await _auth.createUserWithEmailAndPassword(
+      result = await _auth.createUserWithEmailAndPassword(
         email: mail,
         password: motDePasse,
       );
@@ -29,9 +37,22 @@ class UtilisateurService {
       // Récupère l'identifiant de l'utilisateur
       String uid = result.user!.uid;
 
+      String cvUrl = ''; // Initialise cvUrl à une chaîne vide
+      if (cv != null) {
+        // Téléchargez le fichier CV dans Firebase Storage
+        Reference cvRef =
+            _storage.ref().child('cvs/${cv.path.split('/').last}');
+        UploadTask uploadTask = cvRef.putFile(cv);
+        await uploadTask.whenComplete(() => null);
+
+        // Obtenez l'URL du fichier CV téléchargé
+        String cvUrl = await cvRef.getDownloadURL();
+      }
+
       // Crée un document utilisateur dans Firestore avec l'identifiant de l'utilisateur comme clé
       await _firestore.collection('utilisateurs').doc(uid).set({
         // Initialise les champs de l'utilisateur dans Firestore
+        'idUtilisateur': uid,
         'nom': nom,
         'prenom': prenom,
         'mail': mail,
@@ -39,7 +60,7 @@ class UtilisateurService {
         'ville': ville,
         'nationalite': nationalite,
         'commentaire': commentaire,
-        'cv': cv,
+        'cv': cvUrl,
         'dateDeNaissance': dateDeNaissance,
         // Ajoutez d'autres champs d'utilisateur si nécessaire
       });
@@ -48,6 +69,8 @@ class UtilisateurService {
       DocumentSnapshot utilisateurDoc =
           await _firestore.collection('utilisateurs').doc(uid).get();
 
+      print("Utilisateur créé avec succès : $utilisateurDoc");
+
       // Crée un objet Utilisateur à partir des données Firestore
       Utilisateur utilisateur = Utilisateur.fromFirestore(utilisateurDoc);
 
@@ -55,6 +78,13 @@ class UtilisateurService {
     } catch (e) {
       // Gère les erreurs lors de l'inscription
       print("Erreur lors de l'inscription: $e");
+
+      // Si une erreur se produit lors de l'ajout de l'utilisateur à la base de données Firestore
+      // et que result est non null, supprime l'utilisateur créé dans l'authentificateur Firebase
+      if (result != null) {
+        await result.user?.delete();
+      }
+
       return null;
     }
   }

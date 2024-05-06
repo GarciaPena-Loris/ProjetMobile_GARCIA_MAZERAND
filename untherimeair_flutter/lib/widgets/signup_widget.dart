@@ -27,6 +27,12 @@ class _SignUpFormState extends State<SignUpForm> {
   // Variable pour vérifier si tous les champs obligatoires sont remplis
   bool _isFormFilled = false;
 
+  // Variable pour stocker la date de naissance sélectionnée
+  DateTime? _dateDeNaissance;
+
+  // Variable pour stocker le message d'erreur
+  String? _errorMessage;
+
   // Les contrôleurs pour les champs de texte
   final TextEditingController _nomController = TextEditingController();
   final TextEditingController _prenomController = TextEditingController();
@@ -37,9 +43,6 @@ class _SignUpFormState extends State<SignUpForm> {
   final TextEditingController _nationaliteController = TextEditingController();
   final TextEditingController _commentaireController = TextEditingController();
   final TextEditingController _cvController = TextEditingController();
-
-  // Variable pour stocker la date de naissance sélectionnée
-  DateTime? _dateDeNaissance;
 
   // Service d'authentification utilisateur
   final UtilisateurService _utilisateurService = UtilisateurService();
@@ -84,6 +87,15 @@ class _SignUpFormState extends State<SignUpForm> {
   void _validerEtSoumettre() async {
     // Valider le formulaire d'inscription
     if (_formKey.currentState!.validate()) {
+      // Vérifie si l'utilisateur a au moins 18 ans
+      if (_dateDeNaissance!
+          .isAfter(DateTime.now().subtract(const Duration(days: 18 * 365)))) {
+        setState(() {
+          _errorMessage =
+              'Vous devez avoir au moins 18 ans pour vous inscrire.';
+        });
+        return;
+      }
       // Récupérer les valeurs des champs du formulaire
       String mail = _mailController.text.trim();
       String motDePasse = _motDePasseController.text.trim();
@@ -93,63 +105,74 @@ class _SignUpFormState extends State<SignUpForm> {
       String ville = _villeController.text.trim();
       String nationalite = _nationaliteController.text.trim();
       String commentaire = _commentaireController.text.trim();
-      String cv = _cvController.text.trim();
       Timestamp dateDeNaissance = _dateDeNaissance != null
           ? Timestamp.fromDate(_dateDeNaissance!)
           : Timestamp
               .now(); // Utiliser la date actuelle si aucune date de naissance n'est sélectionnée
 
-      // Inscrire l'utilisateur avec Firebase Auth
-      User? user = await widget.authService.signUp(mail, motDePasse);
+      // Inscrire l'utilisateur dans la base de données Firestore
+      Utilisateur? utilisateur = await _utilisateurService.inscrireUtilisateur(
+        mail: mail,
+        motDePasse: motDePasse,
+        nom: nom,
+        prenom: prenom,
+        telephone: telephone,
+        ville: ville,
+        nationalite: nationalite,
+        commentaire: commentaire,
+        cv: _cvFile,
+        dateDeNaissance: dateDeNaissance,
+      );
 
-      if (user != null) {
-        // Inscrire l'utilisateur dans la base de données Firestore
-        Utilisateur? utilisateur =
-            await _utilisateurService.inscrireUtilisateur(
-          mail: mail,
-          motDePasse: motDePasse,
-          nom: nom,
-          prenom: prenom,
-          telephone: telephone,
-          ville: ville,
-          nationalite: nationalite,
-          commentaire: commentaire,
-          cv: cv,
-          dateDeNaissance: dateDeNaissance,
+      if (utilisateur != null && mounted) {
+        // Afficher une Snackbar pour signaler que l'inscription a réussi
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Inscription réussie!'),
+            backgroundColor: Colors.green,
+          ),
         );
 
-        if (utilisateur != null) {
-          // Si l'inscription réussit dans Firebase Auth et Firestore, rediriger l'utilisateur vers la page d'accueil
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(
-              builder: (context) => HomeScreen(),
-            ),
-            (_) => false,
-          );
+        // Si l'inscription réussit dans Firebase Auth et Firestore, rediriger l'utilisateur vers la page d'accueil
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HomeScreen(),
+          ),
+          (_) => false,
+        );
 
-          // Effacer les champs du formulaire après l'inscription réussie
-          _nomController.clear();
-          _prenomController.clear();
-          _mailController.clear();
-          _motDePasseController.clear();
-          _telephoneController.clear();
-          _villeController.clear();
-          _nationaliteController.clear();
-          _commentaireController.clear();
-          _cvController.clear();
-          _dateDeNaissance =
-              null; // Réinitialiser la date de naissance sélectionnée
-        } else {
-          // Gérer le cas où l'inscription dans Firestore échoue
-          // Afficher un message d'erreur ou effectuer une autre action appropriée
-          print('Erreur : l\'inscription dans Firestore a échoué.');
-        }
+        // Effacer les champs du formulaire après l'inscription réussie
+        _nomController.clear();
+        _prenomController.clear();
+        _mailController.clear();
+        _motDePasseController.clear();
+        _telephoneController.clear();
+        _villeController.clear();
+        _nationaliteController.clear();
+        _commentaireController.clear();
+        _cvController.clear();
+        _dateDeNaissance =
+            null; // Réinitialiser la date de naissance sélectionnée
       } else {
-        // Gérer le cas où l'inscription avec Firebase Auth échoue
-        // Afficher un message d'erreur ou effectuer une autre action appropriée
-        print('Erreur : l\'inscription avec Firebase Auth a échoué.');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Erreur : l\'inscription a échoué.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        print('Erreur : l\'inscription dans Firestore a échoué.');
       }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Erreur : Formulaire invalide.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      print('Erreur : Formulaire invalide.');
     }
   }
 
@@ -171,12 +194,12 @@ class _SignUpFormState extends State<SignUpForm> {
             controller: _nomController,
             decoration: const InputDecoration(
               labelText: 'Nom *',
-              hintText: 'Votre nom de famille',
+              hintText: 'Votre nom de famille...',
               prefixIcon: Icon(Icons.badge),
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Michel...';
+                return 'Veuillez entrer votre nom';
               }
               return null;
             },
@@ -188,7 +211,7 @@ class _SignUpFormState extends State<SignUpForm> {
             controller: _prenomController,
             decoration: const InputDecoration(
                 labelText: 'Prénom *',
-                hintText: 'Martin...',
+                hintText: 'Votre prénom...',
                 prefixIcon: Icon(Icons.badge)),
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -211,9 +234,20 @@ class _SignUpFormState extends State<SignUpForm> {
               child: _dateDeNaissance == null
                   ? const Text('')
                   : Text(DateFormat('d MMMM yyyy', 'fr_FR').format(
-                  _dateDeNaissance!)), // Formattez la date de naissance en français
+                      _dateDeNaissance!)), // Formattez la date de naissance en français
             ),
           ),
+
+          // Affiche le message d'erreur sous le champ de la date de naissance
+          if (_errorMessage != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Text(
+                _errorMessage!,
+                style: const TextStyle(color: Colors.red, fontSize: 12),
+              ),
+            ),
+
           const SizedBox(height: 16.0),
 
           // Champ de texte pour l'adresse e-mail
@@ -291,6 +325,7 @@ class _SignUpFormState extends State<SignUpForm> {
           ),
           const SizedBox(height: 16.0),
 
+          // Champ de texte pour les informations complémentaires
           TextFormField(
             controller: _commentaireController,
             decoration: const InputDecoration(
@@ -300,6 +335,8 @@ class _SignUpFormState extends State<SignUpForm> {
             ),
             maxLines: 5, // Permet au champ de texte de s'étendre sur 5 lignes
           ),
+
+          const SizedBox(height: 16.0),
 
           // Champ pour le CV
           Card(

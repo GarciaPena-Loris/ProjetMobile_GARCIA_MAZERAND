@@ -2,3 +2,6 @@
 .gradle/
 build/
 .idea/
+android/app/google-services.json
+.dart_tool/
+/untherimeair_flutter/.dart_tool/
