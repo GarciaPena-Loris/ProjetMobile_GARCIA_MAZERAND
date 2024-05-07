@@ -360,17 +360,33 @@ class _SignUpFormState extends State<SignUpForm> {
                     )
                   : null,
               onTap: () async {
-                FilePickerResult? result =
-                    await FilePicker.platform.pickFiles();
+                if (mounted) {
+                  FilePickerResult? result =
+                      await FilePicker.platform.pickFiles(
+                    type: FileType.custom,
+                    allowedExtensions: [
+                      'pdf'
+                    ], // Autoriser uniquement les fichiers PDF
+                  );
 
-                if (result != null) {
-                  _cvFile = File(result.files.single.path!);
-                  // Utilisez la propriété 'name' pour obtenir le nom du fichier
-                  setState(() {
-                    _cvController.text = result.files.single.name;
-                  });
-                } else {
-                  // User canceled the picker
+                  if (result != null) {
+                    if (result.files.single.extension == 'pdf') {
+                      _cvFile = File(result.files.single.path!);
+                      // Utilisez la propriété 'name' pour obtenir le nom du fichier
+                      setState(() {
+                        _cvController.text = result.files.single.name;
+                      });
+                    } else {
+                      // Affichez un message d'erreur si un fichier autre que PDF est sélectionné
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content:
+                              Text('Veuillez sélectionner un fichier PDF.'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  }
                 }
               },
             ),
