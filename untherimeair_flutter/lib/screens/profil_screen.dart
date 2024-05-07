@@ -1,19 +1,29 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:untherimeair_flutter/models/utilisateur_modele.dart';
 
-class ProfilScreen extends StatelessWidget {
+class ProfilScreen extends StatefulWidget {
   const ProfilScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  _ProfilScreenState createState() => _ProfilScreenState();
+}
 
+class _ProfilScreenState extends State<ProfilScreen> {
+  File? _cvFile;
+
+  @override
+  Widget build(BuildContext context) {
     String calculerAge(DateTime dateDeNaissance) {
       DateTime now = DateTime.now();
       int age = now.year - dateDeNaissance.year;
       if (now.month < dateDeNaissance.month ||
-          (now.month == dateDeNaissance.month && now.day < dateDeNaissance.day)) {
+          (now.month == dateDeNaissance.month &&
+              now.day < dateDeNaissance.day)) {
         age--;
       }
       return age.toString();
@@ -41,10 +51,11 @@ class ProfilScreen extends StatelessWidget {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 } else if (snapshot.hasError) {
-                  return const Center(child: Text('Erreur de chargement du profil'));
+                  return const Center(
+                      child: Text('Erreur de chargement du profil'));
                 } else if (snapshot.hasData) {
                   Utilisateur utilisateur =
-                  Utilisateur.fromFirestore(snapshot.data!);
+                      Utilisateur.fromFirestore(snapshot.data!);
                   return Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
@@ -63,7 +74,7 @@ class ProfilScreen extends StatelessWidget {
                             const Icon(Icons.cake),
                             const SizedBox(width: 8),
                             Text(
-                              calculerAge(utilisateur.dateDeNaissance),
+                              '${calculerAge(utilisateur.dateDeNaissance)} ans',
                               style: const TextStyle(fontSize: 16),
                             ),
                           ],
@@ -147,11 +158,51 @@ class ProfilScreen extends StatelessWidget {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
+                        Card(
+                          color:
+                              _cvFile != null ? Colors.lightGreenAccent : null,
+                          child: ListTile(
+                            leading: const Icon(Icons.description),
+                            title: Text(_cvFile == null
+                                ? 'Sélectionnez votre CV (pdf)'
+                                : _cvFile!.path),
+                            trailing: _cvFile != null
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear),
+                                    onPressed: () {
+                                      setState(() {
+                                        _cvFile = null;
+                                      });
+                                    },
+                                  )
+                                : null,
+                            onTap: () async {
+                              FilePickerResult? result =
+                                  await FilePicker.platform.pickFiles(
+                                type: FileType.custom,
+                                allowedExtensions: ['pdf'],
+                              );
 
-
+                              if (result != null) {
+                                if (result.files.single.extension == 'pdf') {
+                                  setState(() {
+                                    _cvFile = File(result.files.single.path!);
+                                  });
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                          'Veuillez sélectionner un fichier PDF.'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              }
+                            },
+                          ),
+                        ),
 
                         const SizedBox(height: 16),
-
 
                         const Divider(),
                         const SizedBox(height: 16),

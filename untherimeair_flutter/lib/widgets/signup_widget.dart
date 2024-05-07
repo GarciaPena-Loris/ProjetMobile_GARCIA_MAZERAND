@@ -345,7 +345,7 @@ class _SignUpFormState extends State<SignUpForm> {
             child: ListTile(
               leading: const Icon(Icons.description), // Icône 'description'
               title: Text(_cvController.text.isEmpty
-                  ? 'Sélectionnez votre CV'
+                  ? 'Sélectionnez votre CV (pdf)'
                   : _cvController.text), // Texte
               trailing: _cvFile !=
                       null // Si un fichier est sélectionné, affiche une icône de croix pour supprimer le fichier
