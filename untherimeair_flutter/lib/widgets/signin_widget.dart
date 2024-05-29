@@ -92,7 +92,7 @@ class _SignInFormState extends State<SignInForm> {
                   }
                 }
               },
-              child: const Text('Se Connecter'),
+              child: const Text('Se connecter'),
             ),
           ],
         ),

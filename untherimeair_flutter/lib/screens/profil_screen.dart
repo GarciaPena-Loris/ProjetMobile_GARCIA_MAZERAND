@@ -4,7 +4,10 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:untherimeair_flutter/models/utilisateur_modele.dart';
+
+import '../widgets/pdfView_widget.dart';
 
 class ProfilScreen extends StatefulWidget {
   const ProfilScreen({super.key});
@@ -14,11 +17,16 @@ class ProfilScreen extends StatefulWidget {
 }
 
 class _ProfilScreenState extends State<ProfilScreen> {
-  File? _cvFile;
+  bool _cvDeposed = false;
+  final _storage = FirebaseStorage.instance;
 
   @override
   Widget build(BuildContext context) {
-    String calculerAge(DateTime dateDeNaissance) {
+    String calculerAge(DateTime? dateDeNaissance) {
+      if (dateDeNaissance == null) {
+        return 'Date de naissance non fournie';
+      }
+
       DateTime now = DateTime.now();
       int age = now.year - dateDeNaissance.year;
       if (now.month < dateDeNaissance.month ||
@@ -56,6 +64,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
                 } else if (snapshot.hasData) {
                   Utilisateur utilisateur =
                       Utilisateur.fromFirestore(snapshot.data!);
+                  _cvDeposed = utilisateur.cv != '';
                   return Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
@@ -98,7 +107,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
                             const Icon(Icons.phone),
                             const SizedBox(width: 8),
                             Text(
-                              utilisateur.telephone,
+                              utilisateur.telephone ?? 'Non fourni',
                               style: const TextStyle(fontSize: 16),
                             ),
                           ],
@@ -110,7 +119,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
                             const Icon(Icons.location_city),
                             const SizedBox(width: 8),
                             Text(
-                              utilisateur.ville,
+                              utilisateur.ville ?? 'Non fournie',
                               style: const TextStyle(fontSize: 16),
                             ),
                           ],
@@ -122,7 +131,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
                             const Icon(Icons.flag),
                             const SizedBox(width: 8),
                             Text(
-                              utilisateur.nationalite,
+                              utilisateur.nationalite ?? 'Non fournie',
                               style: const TextStyle(fontSize: 16),
                             ),
                           ],
@@ -134,7 +143,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
                             const Icon(Icons.comment),
                             const SizedBox(width: 8),
                             Text(
-                              utilisateur.commentaire,
+                              utilisateur.commentaire ?? '',
                               style: const TextStyle(fontSize: 16),
                             ),
                           ],
@@ -142,12 +151,30 @@ class _ProfilScreenState extends State<ProfilScreen> {
 
                         const SizedBox(height: 16),
                         // Ajoutez d'autres informations de l'utilisateur ici avec des icônes correspondantes
-                        ElevatedButton(
-                          onPressed: () {
-                            // Ajoutez ici la logique pour modifier les informations de l'utilisateur
-                          },
-                          child: const Text('Modifier le profil'),
+
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          // Centrer les boutons dans la ligne
+                          children: [
+                            // Bouton pour modifier le profil
+                            ElevatedButton(
+                              onPressed: () {
+                                // Ajoutez ici la logique pour modifier les informations de l'utilisateur
+                              },
+                              child: const Text('Modifier le profil'),
+                            ),
+
+                            // Bouton de déconnexion
+                            ElevatedButton(
+                              onPressed: () async {
+                                await FirebaseAuth.instance.signOut();
+                                Navigator.pushNamed(context, '/home');
+                              },
+                              child: const Text('Déconnexion'),
+                            ),
+                          ],
                         ),
+
                         const SizedBox(height: 16),
                         const Divider(),
                         const SizedBox(height: 16),
@@ -159,43 +186,131 @@ class _ProfilScreenState extends State<ProfilScreen> {
                           ),
                         ),
                         Card(
-                          color:
-                              _cvFile != null ? Colors.lightGreenAccent : null,
+                          color: _cvDeposed ? Colors.lightBlueAccent : null,
                           child: ListTile(
                             leading: const Icon(Icons.description),
-                            title: Text(_cvFile == null
-                                ? 'Sélectionnez votre CV (pdf)'
-                                : _cvFile!.path),
-                            trailing: _cvFile != null
-                                ? IconButton(
-                                    icon: const Icon(Icons.clear),
-                                    onPressed: () {
-                                      setState(() {
-                                        _cvFile = null;
-                                      });
-                                    },
+                            title: Text(_cvDeposed
+                                ? 'CV déjà déposé'
+                                : 'Déposé votre CV (pdf)'),
+                            trailing: _cvDeposed
+                                ? Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.visibility),
+                                        onPressed: () async {
+                                          try {
+                                            final ref = FirebaseStorage.instance
+                                                .ref(
+                                                    'cvs/${FirebaseAuth.instance.currentUser!.uid}.pdf');
+                                            final url =
+                                                await ref.getDownloadURL();
+
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    PdfViewPage(url: url),
+                                              ),
+                                            );
+                                          } catch (e) {
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              SnackBar(
+                                                  content: Text(
+                                                      'Erreur de chargement du CV: $e')),
+                                            );
+                                          }
+                                        },
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.clear),
+                                        onPressed: () {
+                                          setState(() {
+                                            _cvDeposed = false;
+                                          });
+                                          // Supprimer le CV de Firebase Storage
+                                          _storage
+                                              .ref(
+                                                  'cvs/${FirebaseAuth.instance.currentUser!.uid}.pdf')
+                                              .delete();
+                                          // Supprimer le lien du CV de la base de données
+                                          FirebaseFirestore.instance
+                                              .collection('utilisateurs')
+                                              .doc(FirebaseAuth
+                                                  .instance.currentUser!.uid)
+                                              .update({'cv': ''});
+
+                                          const SnackBar(
+                                            content: Text('Cv supprimé'),
+                                            backgroundColor: Colors.red,
+                                          );
+                                        },
+                                      ),
+                                    ],
                                   )
                                 : null,
                             onTap: () async {
-                              FilePickerResult? result =
-                                  await FilePicker.platform.pickFiles(
-                                type: FileType.custom,
-                                allowedExtensions: ['pdf'],
-                              );
+                              if (!_cvDeposed) {
+                                FilePickerResult? result =
+                                    await FilePicker.platform.pickFiles(
+                                  type: FileType.custom,
+                                  allowedExtensions: ['pdf'],
+                                );
 
-                              if (result != null) {
-                                if (result.files.single.extension == 'pdf') {
-                                  setState(() {
-                                    _cvFile = File(result.files.single.path!);
-                                  });
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                          'Veuillez sélectionner un fichier PDF.'),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
+                                if (result != null) {
+                                  if (result.files.single.extension == 'pdf') {
+                                    // Upload to Firebase Storage
+                                    try {
+                                      TaskSnapshot snapshot = await _storage
+                                          .ref(
+                                              'cvs/${FirebaseAuth.instance.currentUser!.uid}.pdf')
+                                          .putFile(
+                                              File(result.files.single.path!));
+
+                                      // Get the download URL
+                                      String downloadURL =
+                                          await snapshot.ref.getDownloadURL();
+
+                                      // Update the CV link in the database
+                                      await FirebaseFirestore.instance
+                                          .collection('utilisateurs')
+                                          .doc(FirebaseAuth
+                                              .instance.currentUser!.uid)
+                                          .update({'cv': downloadURL});
+
+                                      setState(() {
+                                        _cvDeposed = true;
+                                      });
+
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                            content: Text('CV déposé.'),
+                                            backgroundColor: Colors.green,
+                                          ),
+                                        );
+                                      }
+                                    } catch (e) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                              'Failed to upload CV. Error: $e'),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    }
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                            'Veuillez sélectionner un fichier PDF.'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
                                 }
                               }
                             },

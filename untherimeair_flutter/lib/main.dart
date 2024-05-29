@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:untherimeair_flutter/screens/home_screen.dart';
@@ -7,6 +8,7 @@ import 'package:untherimeair_flutter/screens/home_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  await FlutterDownloader.initialize(debug: true);
   await initializeDateFormatting('fr_FR', null);
   runApp(const MyApp());
 }
@@ -31,6 +33,9 @@ class MyApp extends StatelessWidget {
         Locale('fr', ''), // Français
       ],
       home: HomeScreen(),
+      routes: {
+        '/home': (context) => HomeScreen(), // Add this line
+      },
     );
   }
 }

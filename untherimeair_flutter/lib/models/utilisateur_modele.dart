@@ -5,12 +5,12 @@ class Utilisateur {
   final String mail;
   final String nom;
   final String prenom;
-  final DateTime dateDeNaissance;
-  final String telephone;
-  final String ville;
-  final String nationalite;
-  final String commentaire;
-  final String cv;
+  final DateTime? dateDeNaissance;
+  final String? telephone;
+  final String? ville;
+  final String? nationalite;
+  final String? commentaire;
+  final String? cv;
 
   Utilisateur({
     required this.idUtilisateur,
