@@ -1,8 +1,6 @@
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:untherimeair_flutter/screens/home_screen.dart';
@@ -18,7 +16,7 @@ import '../services/auth_service.dart';
 class SignUpForm extends StatefulWidget {
   final AuthService authService;
 
-  const SignUpForm({Key? key, required this.authService}) : super(key: key);
+  const SignUpForm({super.key, required this.authService});
 
   @override
   _SignUpFormState createState() => _SignUpFormState();
@@ -28,6 +26,9 @@ class _SignUpFormState extends State<SignUpForm> {
   bool isEmployer = false;
   final _formKey = GlobalKey<FormState>();
   File? _cvFile;
+
+  // Liste pour stocker les liens publics
+  final List<String> _liensPublics = [];
 
   // Variables de contrôleurs pour les champs de texte
   final TextEditingController _nomController = TextEditingController();
@@ -45,6 +46,8 @@ class _SignUpFormState extends State<SignUpForm> {
       TextEditingController();
   final TextEditingController _telephoneEntrepriseController =
       TextEditingController();
+
+  final TextEditingController _liensPublicsController = TextEditingController();
 
   // Service d'utilisateur et d'employeur
   final UtilisateurService _utilisateurService = UtilisateurService();
@@ -74,10 +77,8 @@ class _SignUpFormState extends State<SignUpForm> {
   void _checkFormFilled() {
     setState(() {
       _isFormFilled = _nomController.text.isNotEmpty &&
-          _prenomController.text.isNotEmpty &&
           _mailController.text.isNotEmpty &&
-          _motDePasseController.text.isNotEmpty &&
-          _dateDeNaissance != null;
+          _motDePasseController.text.isNotEmpty;
     });
   }
 
@@ -85,7 +86,6 @@ class _SignUpFormState extends State<SignUpForm> {
   void initState() {
     super.initState();
     _nomController.addListener(_checkFormFilled);
-    _prenomController.addListener(_checkFormFilled);
     _mailController.addListener(_checkFormFilled);
     _motDePasseController.addListener(_checkFormFilled);
   }
@@ -93,23 +93,24 @@ class _SignUpFormState extends State<SignUpForm> {
   @override
   void dispose() {
     _nomController.removeListener(_checkFormFilled);
-    _prenomController.removeListener(_checkFormFilled);
     _mailController.removeListener(_checkFormFilled);
     _motDePasseController.removeListener(_checkFormFilled);
     super.dispose();
   }
 
+  // Fonction pour ajouter un lien public à la liste
+  void _ajouterLienPublic() {
+    if (_liensPublicsController.text.isNotEmpty) {
+      setState(() {
+        _liensPublics.add(_liensPublicsController.text.trim());
+        _liensPublicsController.clear();
+      });
+    }
+  }
+
   // Fonction pour valider et soumettre le formulaire d'inscription
   void _validerEtSoumettre() async {
     if (_formKey.currentState!.validate()) {
-      if (_dateDeNaissance!
-          .isAfter(DateTime.now().subtract(const Duration(days: 18 * 365)))) {
-        setState(() {
-          _errorMessage =
-              'Vous devez avoir au moins 18 ans pour vous inscrire.';
-        });
-        return;
-      }
       if (isEmployer) {
         // Inscription pour un employeur
         String mail = _mailController.text.trim();
@@ -117,10 +118,7 @@ class _SignUpFormState extends State<SignUpForm> {
         String nom = _nomController.text.trim();
         String adresseEntreprise = _adresseEntrepriseController.text.trim();
         String nomEntreprise = _nomEntrepriseController.text.trim();
-        String telephone = _telephoneController.text.trim();
         String telephoneEntreprise = _telephoneEntrepriseController.text.trim();
-        List<String> liensPublics =
-            []; // Ajoutez la logique pour gérer les liens publics
 
         Employeur? employeur = await _employeurService.inscrireEmployeur(
           mail: mail,
@@ -128,9 +126,8 @@ class _SignUpFormState extends State<SignUpForm> {
           nom: nom,
           adresseEntreprise: adresseEntreprise,
           nomEntreprise: nomEntreprise,
-          telephone: telephone,
           telephoneEntreprise: telephoneEntreprise,
-          liensPublics: liensPublics,
+          liensPublics: _liensPublics,
         );
 
         if (employeur != null && mounted) {
@@ -153,9 +150,10 @@ class _SignUpFormState extends State<SignUpForm> {
           _nomEntrepriseController.clear();
           _mailController.clear();
           _motDePasseController.clear();
+          _dateDeNaissance = null;
           _telephoneController.clear();
           _telephoneEntrepriseController.clear();
-          _dateDeNaissance = null;
+          _liensPublicsController.clear();
         } else {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -170,6 +168,16 @@ class _SignUpFormState extends State<SignUpForm> {
               'Erreur : l\'inscription de l\'employeur dans Firestore a échoué.');
         }
       } else {
+        if (_dateDeNaissance == null ||
+            _dateDeNaissance!.isAfter(
+                DateTime.now().subtract(const Duration(days: 18 * 365)))) {
+          setState(() {
+            _errorMessage =
+                'Vous devez avoir au moins 18 ans pour vous inscrire.';
+          });
+          return;
+        }
+
         // Inscription pour un utilisateur régulier
         String mail = _mailController.text.trim();
         String motDePasse = _motDePasseController.text.trim();
@@ -183,16 +191,6 @@ class _SignUpFormState extends State<SignUpForm> {
             ? Timestamp.fromDate(_dateDeNaissance!)
             : Timestamp
                 .now(); // Utiliser la date actuelle si aucune date de naissance n'est sélectionnée
-
-        String cvUrl = '';
-        if (_cvFile != null) {
-          Reference cvRef = FirebaseStorage.instance
-              .ref()
-              .child('cvs/${_cvFile!.path.split('/').last}');
-          UploadTask uploadTask = cvRef.putFile(_cvFile!);
-          await uploadTask.whenComplete(() => null);
-          cvUrl = await cvRef.getDownloadURL();
-        }
 
         Utilisateur? utilisateur =
             await _utilisateurService.inscrireUtilisateur(
@@ -220,7 +218,7 @@ class _SignUpFormState extends State<SignUpForm> {
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(
-              builder: (context) => HomeScreen(),
+              builder: (context) => const HomeScreen(),
             ),
             (_) => false,
           );
@@ -303,29 +301,12 @@ class _SignUpFormState extends State<SignUpForm> {
                   return null;
                 },
               ),
-              TextFormField(
-                controller: _telephoneController,
-                decoration: const InputDecoration(
-                    labelText: 'Téléphone', prefixIcon: Icon(Icons.phone)),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Veuillez entrer votre téléphone';
-                  }
-                  return null;
-                },
-              ),
               const SizedBox(height: 16.0),
               TextFormField(
                 controller: _nomEntrepriseController,
                 decoration: const InputDecoration(
-                    labelText: 'Nom de l\'entreprise *',
+                    labelText: 'Nom de l\'entreprise',
                     prefixIcon: Icon(Icons.business_center)),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Veuillez entrer le nom de l\'entreprise';
-                  }
-                  return null;
-                },
               ),
               TextFormField(
                 controller: _adresseEntrepriseController,
@@ -345,13 +326,42 @@ class _SignUpFormState extends State<SignUpForm> {
                 decoration: const InputDecoration(
                     labelText: 'Téléphone de l\'entreprise',
                     prefixIcon: Icon(Icons.phone_enabled)),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Veuillez entrer le téléphone de l\'entreprise';
-                  }
-                  return null;
-                },
               ),
+              // Champ pour ajouter des liens publics
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _liensPublicsController,
+                      decoration: const InputDecoration(
+                          labelText: 'Lien public',
+                          prefixIcon: Icon(Icons.link)),
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.add),
+                    onPressed: _ajouterLienPublic,
+                  ),
+                ],
+              ),
+              // Afficher les liens publics ajoutés
+              if (_liensPublics.isNotEmpty)
+                Column(
+                  children: _liensPublics
+                      .map((lien) => ListTile(
+                            title: Text(lien),
+                            trailing: IconButton(
+                              icon: Icon(Icons.remove),
+                              onPressed: () {
+                                setState(() {
+                                  _liensPublics.remove(lien);
+                                });
+                              },
+                            ),
+                          ))
+                      .toList(),
+                ),
+              // Version utilisateur
             ] else ...[
               const Text(
                 'Inscrivez-vous pour pouvoir postuler à des missions',

@@ -2,6 +2,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:untherimeair_flutter/services/auth_service.dart';
 
+import '../screens/home_screen.dart';
+
 class SignInForm extends StatefulWidget {
   final AuthService authService;
 
@@ -30,7 +32,6 @@ class _SignInFormState extends State<SignInForm> {
               style: TextStyle(fontSize: 12.0, color: Colors.grey),
             ),
             const SizedBox(height: 16.0),
-
             TextFormField(
               controller: _emailController,
               decoration: const InputDecoration(
@@ -51,7 +52,6 @@ class _SignInFormState extends State<SignInForm> {
               },
             ),
             const SizedBox(height: 16.0),
-
             TextFormField(
               controller: _passwordController,
               decoration: const InputDecoration(
@@ -71,7 +71,6 @@ class _SignInFormState extends State<SignInForm> {
               },
             ),
             const SizedBox(height: 16.0),
-
             ElevatedButton(
               onPressed: () async {
                 if (_formKey.currentState!.validate()) {
@@ -84,10 +83,17 @@ class _SignInFormState extends State<SignInForm> {
 
                   if (user != null) {
                     // Si l'utilisateur est connecté, navigue vers la page d'accueil
-                    Navigator.pushNamed(context, '/home');
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const HomeScreen(),
+                      ),
+                      (_) => false,
+                    );
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Erreur lors de la connexion')),
+                      const SnackBar(
+                          content: Text('Erreur lors de la connexion')),
                     );
                   }
                 }

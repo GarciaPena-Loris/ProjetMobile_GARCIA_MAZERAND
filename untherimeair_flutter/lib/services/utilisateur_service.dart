@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:untherimeair_flutter/models/utilisateur_modele.dart';
+import 'package:untherimeair_flutter/services/auth_service.dart';
 
 class UtilisateurService {
   final FirebaseAuth _auth = FirebaseAuth.instance; // Instance de FirebaseAuth
@@ -11,6 +12,7 @@ class UtilisateurService {
       FirebaseFirestore.instance; // Instance de Firestore
   final FirebaseStorage _storage =
       FirebaseStorage.instance; // Instance de FirebaseStorage
+  final AuthService authService = AuthService(); // Instance de AuthService
 
   // Inscription d'un nouvel utilisateur
   Future<Utilisateur?> inscrireUtilisateur({
@@ -28,14 +30,8 @@ class UtilisateurService {
     UserCredential? result; // Déclaration de result en dehors du bloc try
 
     try {
-      // Crée un nouvel utilisateur dans Firebase Authentication
-      result = await _auth.createUserWithEmailAndPassword(
-        email: mail,
-        password: motDePasse,
-      );
-
-      // Récupère l'identifiant de l'utilisateur
-      String uid = result.user!.uid;
+      User? user = await authService.signUp(mail, motDePasse, false);
+      String uid = user!.uid;
 
       String cvUrl = ''; // Initialise cvUrl à une chaîne vide
       if (cv != null) {
@@ -46,7 +42,7 @@ class UtilisateurService {
         await uploadTask.whenComplete(() => null);
 
         // Obtenez l'URL du fichier CV téléchargé
-        String cvUrl = await cvRef.getDownloadURL();
+        cvUrl = await cvRef.getDownloadURL();
       }
 
       // Crée un document utilisateur dans Firestore avec l'identifiant de l'utilisateur comme clé

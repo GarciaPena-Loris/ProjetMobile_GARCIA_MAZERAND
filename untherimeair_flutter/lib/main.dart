@@ -4,6 +4,9 @@ import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:untherimeair_flutter/screens/home_screen.dart';
+import 'package:untherimeair_flutter/widgets/generateAnnonce_widget.dart';
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,6 +22,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'Un Thé Rime Air',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueAccent),
@@ -32,9 +36,10 @@ class MyApp extends StatelessWidget {
       supportedLocales: const [
         Locale('fr', ''), // Français
       ],
-      home: HomeScreen(),
+      home: const HomeScreen(),
       routes: {
-        '/home': (context) => HomeScreen(), // Add this line
+        '/home': (context) => const HomeScreen(),
+        '/generate_ads': (context) => GenerateAdsWidget()
       },
     );
   }

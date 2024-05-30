@@ -1,14 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'dart:io';
+import 'package:untherimeair_flutter/services/auth_service.dart';
 
 import 'package:untherimeair_flutter/models/employeur_modele.dart';
 
 class EmployeurService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final AuthService authService = AuthService();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseStorage _storage = FirebaseStorage.instance;
 
   // Inscription d'un nouvel employeur
   Future<Employeur?> inscrireEmployeur({
@@ -17,19 +15,12 @@ class EmployeurService {
     required String nom,
     required String adresseEntreprise,
     required String nomEntreprise,
-    required String telephone,
     required String telephoneEntreprise,
     required List<String> liensPublics,
   }) async {
-    UserCredential? result;
-
     try {
-      result = await _auth.createUserWithEmailAndPassword(
-        email: mail,
-        password: motDePasse,
-      );
-
-      String uid = result.user!.uid;
+      User? user = await authService.signUp(mail, motDePasse, true);
+      String uid = user!.uid;
 
       await _firestore.collection('employeurs').doc(uid).set({
         'idEmployeur': uid,
@@ -37,22 +28,18 @@ class EmployeurService {
         'adresseEntreprise': adresseEntreprise,
         'nomEntreprise': nomEntreprise,
         'mail': mail,
-        'telephone': telephone,
         'telephoneEntreprise': telephoneEntreprise,
         'liensPublics': liensPublics,
       });
 
       DocumentSnapshot employeurDoc =
-      await _firestore.collection('employeurs').doc(uid).get();
+          await _firestore.collection('employeurs').doc(uid).get();
 
       Employeur employeur = Employeur.fromFirestore(employeurDoc);
 
       return employeur;
     } catch (e) {
       print("Erreur lors de l'inscription de l'employeur: $e");
-      if (result != null) {
-        await result.user?.delete();
-      }
       return null;
     }
   }

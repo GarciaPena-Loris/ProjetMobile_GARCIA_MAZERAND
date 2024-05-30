@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class Annonce {
   final int idAnnonce;
   final DocumentReference idEmployeur;
-  final String titre;
   final String description;
   final DateTime dateDebut;
   final DateTime dateFin;
@@ -17,7 +16,6 @@ class Annonce {
   Annonce({
     required this.idAnnonce,
     required this.idEmployeur,
-    required this.titre,
     required this.description,
     required this.dateDebut,
     required this.dateFin,
@@ -36,7 +34,6 @@ class Annonce {
     return Annonce(
       idAnnonce: data['idAnnonce'] ?? 0,
       idEmployeur: data['idEmployeur'] as DocumentReference,
-      titre: data['titre'] ?? '',
       description: data['description'] ?? '',
       dateDebut: (data['dateDebut'] as Timestamp).toDate(),
       dateFin: (data['dateFin'] as Timestamp).toDate(),

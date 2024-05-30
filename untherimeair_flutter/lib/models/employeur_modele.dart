@@ -2,11 +2,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Employeur {
   final String idEmployeur;
-  final String adresseEntreprise;
-  final String nomEntreprise;
   final String nom;
   final String mail;
-  final String telephone;
+  final String? adresseEntreprise;
+  final String? nomEntreprise;
+  final String? telephoneEntreprise;
   final List<String> liensPublics;
 
   Employeur({
@@ -15,7 +15,7 @@ class Employeur {
     required this.nomEntreprise,
     required this.nom,
     required this.mail,
-    required this.telephone,
+    required this.telephoneEntreprise,
     required this.liensPublics,
   });
 
@@ -28,7 +28,7 @@ class Employeur {
       nomEntreprise: data['nomEntreprise'] ?? '',
       nom: data['nom'] ?? '',
       mail: data['mail'] ?? '',
-      telephone: data['telephone'] ?? '',
+      telephoneEntreprise: data['telephone'] ?? '',
       liensPublics: List<String>.from(data['liensPublics'] ?? []),
     );
   }

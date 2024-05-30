@@ -24,7 +24,7 @@ class AnnonceScreen extends StatelessWidget {
           children: [
             // Titre de l'annonce
             Text(
-              annonce.titre,
+              annonce.metierCible,
               style: const TextStyle(
                 fontSize: 24.0,
                 fontWeight: FontWeight.bold,
@@ -40,15 +40,6 @@ class AnnonceScreen extends StatelessWidget {
             const SizedBox(height: 16.0),
             // Barre horizontale
              const Divider(),
-
-            // Métier ciblé
-            const SizedBox(height: 16.0),
-            _buildDetailItem('Métier ciblé', Icons.work, annonce.metierCible),
-            const SizedBox(height: 16.0),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.0),
-              child: Divider(),
-            ),
 
             // Date du contrat
             const SizedBox(height: 16.0),

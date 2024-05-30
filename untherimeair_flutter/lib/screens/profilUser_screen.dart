@@ -7,18 +7,22 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:untherimeair_flutter/models/utilisateur_modele.dart';
 
+import '../main.dart';
+import '../services/auth_service.dart';
 import '../widgets/pdfView_widget.dart';
+import 'home_screen.dart';
 
-class ProfilScreen extends StatefulWidget {
-  const ProfilScreen({super.key});
+class ProfilUserScreen extends StatefulWidget {
+  const ProfilUserScreen({super.key});
 
   @override
-  _ProfilScreenState createState() => _ProfilScreenState();
+  _ProfilUserScreenState createState() => _ProfilUserScreenState();
 }
 
-class _ProfilScreenState extends State<ProfilScreen> {
+class _ProfilUserScreenState extends State<ProfilUserScreen> {
   bool _cvDeposed = false;
   final _storage = FirebaseStorage.instance;
+  final AuthService authService = AuthService();
 
   @override
   Widget build(BuildContext context) {
@@ -163,18 +167,18 @@ class _ProfilScreenState extends State<ProfilScreen> {
                               },
                               child: const Text('Modifier le profil'),
                             ),
-
                             // Bouton de déconnexion
                             ElevatedButton(
                               onPressed: () async {
-                                await FirebaseAuth.instance.signOut();
-                                Navigator.pushNamed(context, '/home');
+                                await authService.signOut();
+                                WidgetsBinding.instance.addPostFrameCallback((_) {
+                                  navigatorKey.currentState!.pushNamedAndRemoveUntil('/home', (Route<dynamic> route) => false);
+                                });
                               },
                               child: const Text('Déconnexion'),
                             ),
                           ],
                         ),
-
                         const SizedBox(height: 16),
                         const Divider(),
                         const SizedBox(height: 16),

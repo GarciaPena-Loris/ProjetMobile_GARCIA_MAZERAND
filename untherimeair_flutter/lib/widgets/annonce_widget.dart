@@ -29,7 +29,7 @@ class AnnonceWidget extends StatelessWidget {
               children: [
                 // Titre de l'annonce
                 Text(
-                  annonce.titre,
+                  annonce.metierCible,
                   style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
                 // Lieu de l'annonce
@@ -40,7 +40,7 @@ class AnnonceWidget extends StatelessWidget {
                 const SizedBox(height: 16),
                 // Date de publication de l'annonce
                 Text(
-                  'Offre publiée il y a plus de ${DateTime.now().difference(annonce.datePublication).inDays} jours',
+                  'Offre publiée il y a ${DateTime.now().difference(annonce.datePublication).inDays} jours',
                   style: const TextStyle(fontSize: 14),
                 ),
               ],
