@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:untherimeair_flutter/screens/applyForm_screen.dart';
 import 'package:untherimeair_flutter/services/auth_service.dart';
 
 import '../models/annonce_modele.dart';
@@ -39,7 +40,7 @@ class AnnonceScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16.0),
             // Barre horizontale
-             const Divider(),
+            const Divider(),
 
             // Date du contrat
             const SizedBox(height: 16.0),
@@ -78,7 +79,6 @@ class AnnonceScreen extends StatelessWidget {
             _buildDetailItem('Rémunération', Icons.attach_money,
                 '${annonce.remuneration} €/heure'),
             const SizedBox(height: 32.0),
-
 
             // Bouton "Postuler à l'annonce"
             StreamBuilder<User?>(

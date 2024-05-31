@@ -120,78 +120,75 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: ListView(
-        children: [
-          FutureBuilder<bool>(
-            future: getEmployeurStatus(),
-            builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const CircularProgressIndicator();
-              } else if (snapshot.hasError) {
-                return Text('Erreur: ${snapshot.error}');
-              } else {
-                if (snapshot.data == true) {
-                  return const PostJobWidget();
-                } else {
-                  return Column(
-                    children: [
-                      Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: SizedBox(
-                            width: double.infinity, // Largeur maximale
-                            child: ElevatedButton.icon(
-                              icon: const Icon(Icons.search),
-                              // Icône de recherche
-                              label: const Text('Rechercher'),
-                              onPressed: () {
-                                WidgetsBinding.instance
-                                    .addPostFrameCallback((_) {
-                                  showModalBottomSheet(
-                                    context: context,
-                                    isScrollControlled: true,
-                                    builder: (context) => FractionallySizedBox(
-                                      heightFactor: 0.7,
-                                      child: Search(
-                                        onSearch: (arg1, arg2, arg3) {
-                                          // Ajoutez la logique de recherche ici
-                                        },
-                                      ),
-                                    ),
-                                  );
-                                });
-                              },
-                            ),
-                          )),
-                      StreamBuilder<List<Annonce>>(
-                        stream: _annonceService.getAnnonces(),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return const Center(
-                                child: CircularProgressIndicator());
-                          } else if (snapshot.hasError) {
-                            return const Center(
-                                child:
-                                    Text('Erreur de chargement des annonces'));
-                          } else {
-                            List<Annonce> annonces = snapshot.data ?? [];
-                            return ListView.builder(
-                              shrinkWrap: true,
-                              itemCount: annonces.length,
-                              itemBuilder: (context, index) {
-                                return AnnonceWidget(annonce: annonces[index]);
-                              },
-                            );
-                          }
-                        },
-                      ),
-                    ],
-                  );
-                }
-              }
-            },
-          ),
-        ],
+      body: FutureBuilder<bool>(
+        future: getEmployeurStatus(),
+        builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const CircularProgressIndicator();
+          } else if (snapshot.hasError) {
+            return Text('Erreur: ${snapshot.error}');
+          } else {
+            if (snapshot.data == true) {
+              return const PostJobWidget();
+            } else {
+              return Column(
+                children: [
+                  Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: SizedBox(
+                        width: double.infinity, // Largeur maximale
+                        child: ElevatedButton.icon(
+                          icon: const Icon(Icons.search),
+                          // Icône de recherche
+                          label: const Text('Rechercher'),
+                          onPressed: () {
+                            WidgetsBinding.instance
+                                .addPostFrameCallback((_) {
+                              showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                builder: (context) => FractionallySizedBox(
+                                  heightFactor: 0.7,
+                                  child: Search(
+                                    onSearch: (arg1, arg2, arg3) {
+                                      // Ajoutez la logique de recherche ici
+                                    },
+                                  ),
+                                ),
+                              );
+                            });
+                          },
+                        ),
+                      )),
+                  Expanded(
+                    child: StreamBuilder<List<Annonce>>(
+                      stream: _annonceService.getAnnonces(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        } else if (snapshot.hasError) {
+                          return const Center(
+                              child:
+                              Text('Erreur de chargement des annonces'));
+                        } else {
+                          List<Annonce> annonces = snapshot.data ?? [];
+                          return ListView.builder(
+                            itemCount: annonces.length,
+                            itemBuilder: (context, index) {
+                              return AnnonceWidget(annonce: annonces[index]);
+                            },
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              );
+            }
+          }
+        },
       ),
     );
   }

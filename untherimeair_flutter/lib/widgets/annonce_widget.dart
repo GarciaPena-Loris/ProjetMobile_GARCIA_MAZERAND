@@ -20,7 +20,12 @@ class AnnonceWidget extends StatelessWidget {
         );
       },
       child: Container(
-        margin: const EdgeInsets.all(16.0),
+        margin: const EdgeInsets.only(
+          left: 16.0,
+          right: 16.0,
+          top: 4.0,
+          bottom: 4.0,
+        ),
         child: Card(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
