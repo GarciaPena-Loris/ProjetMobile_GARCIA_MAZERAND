@@ -11,21 +11,21 @@ import 'package:untherimeair_flutter/screens/profilEmployer_screen.dart';
 import '../models/annonce_modele.dart';
 import '../services/annonce_service.dart';
 
-class PostJobWidget extends StatefulWidget {
-  const PostJobWidget({super.key});
+class PostAnnonceWidget extends StatefulWidget {
+  const PostAnnonceWidget({super.key});
 
   @override
-  _PostJobWidgetState createState() => _PostJobWidgetState();
+  _PostAnnonceWidgetState createState() => _PostAnnonceWidgetState();
 }
 
-class _PostJobWidgetState extends State<PostJobWidget> {
+class _PostAnnonceWidgetState extends State<PostAnnonceWidget> {
   final _annonceService = AnnonceService();
   final user = FirebaseAuth.instance.currentUser!;
 
   final _formKey = GlobalKey<FormState>();
-  String titreMission = '';
-  String localisation = '';
-  double salaire = 11.65;
+  String metierCible = '';
+  String ville = '';
+  double remuneration = 11.65;
   double amplitudeHoraire = 1;
   String description = '';
   DateTime dateDebut = DateTime.now();
@@ -80,7 +80,7 @@ class _PostJobWidgetState extends State<PostJobWidget> {
       _formKey.currentState!.save();
 
       // Récupérer les coordonnées de la ville
-      bool coordinatesFound = await _getCoordinates(localisation);
+      bool coordinatesFound = await _getCoordinates(ville);
       if (!coordinatesFound) {
         return;
       }
@@ -92,10 +92,10 @@ class _PostJobWidgetState extends State<PostJobWidget> {
         dateFin: dateFin,
         datePublication: DateTime.now(),
         emplacement: [latitude!, longitude!],
-        metierCible: titreMission,
-        remuneration: salaire,
-        ville: localisation,
-        amplitudeHoraire: amplitudeHoraire.toInt(),
+        metierCible: metierCible,
+        remuneration: remuneration,
+        ville: ville,
+        amplitudeHoraire: amplitudeHoraire,
       );
 
       if (annonce != null) {
@@ -175,7 +175,7 @@ class _PostJobWidgetState extends State<PostJobWidget> {
                           prefixIcon: Icon(Icons.format_quote)),
                       onChanged: (value) {
                         setState(() {
-                          titreMission = value;
+                          metierCible = value;
                         });
                       },
                     ),
@@ -191,12 +191,12 @@ class _PostJobWidgetState extends State<PostJobWidget> {
                     ),
                     TextFormField(
                       decoration: const InputDecoration(
-                        labelText: 'Localisation',
+                        labelText: 'Ville',
                         prefixIcon: Icon(Icons.map),
                       ),
                       onChanged: (value) {
                         setState(() {
-                          localisation = value;
+                          ville = value;
                         });
                       },
                     ),
@@ -208,8 +208,8 @@ class _PostJobWidgetState extends State<PostJobWidget> {
                       step: 0.01,
                       decimals: 2,
                       acceleration: 2.0,
-                      value: salaire,
-                      onChanged: (value) => setState(() => salaire = value),
+                      value: remuneration,
+                      onChanged: (value) => setState(() => remuneration = value),
                       decoration: const InputDecoration(
                           labelText: 'Salaire horaire brut'),
                     ),

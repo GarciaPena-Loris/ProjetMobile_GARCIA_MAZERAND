@@ -11,7 +11,7 @@ class Annonce {
   final String metierCible;
   final double remuneration;
   final String ville;
-  final int amplitudeHoraire;
+  final double amplitudeHoraire;
 
   Annonce({
     required this.idAnnonce,
@@ -42,7 +42,7 @@ class Annonce {
         metierCible: data['metierCible'] ?? '',
         remuneration: (data['remuneration'] as num).toDouble(),
         ville: data['ville'] ?? '',
-        amplitudeHoraire: data['amplitudeHoraire'] ?? 0);
+        amplitudeHoraire: (data['amplitudeHoraire'] as num).toDouble());
   }
 
   Map<String, dynamic> toMap() {

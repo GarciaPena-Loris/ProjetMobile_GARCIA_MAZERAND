@@ -20,7 +20,7 @@ class AnnonceService {
     required String metierCible,
     required double remuneration,
     required String ville,
-    required int amplitudeHoraire,
+    required double amplitudeHoraire,
   }) async {
     try {
       // Générer un nouvel ID d'annonce
@@ -48,6 +48,33 @@ class AnnonceService {
     } catch (e) {
       print('Erreur lors de l\'ajout de l\'annonce: $e');
       return null;
+    }
+  }
+
+  Future<void> updateAnnonce({
+    required String idAnnonce,
+    required String titreMission,
+    required String description,
+    required String localisation,
+    required double salaire,
+    required double amplitudeHoraire,
+    required List<double> emplacement,
+    required DateTime dateDebut,
+    required DateTime dateFin,
+  }) async {
+    try {
+      await _db.collection('annonces').doc(idAnnonce).update({
+        'metierCible': titreMission,
+        'description': description,
+        'ville': localisation,
+        'remuneration': salaire,
+        'amplitudeHoraire': amplitudeHoraire,
+        'emplacement':  GeoPoint(emplacement[0], emplacement[1]),
+        'dateDebut': dateDebut,
+        'dateFin': dateFin,
+      });
+    } catch (e) {
+      print('Erreur lors de la mise à jour de l\'annonce: $e');
     }
   }
 }

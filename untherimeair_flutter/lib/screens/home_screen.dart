@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:untherimeair_flutter/screens/profilEmployer_screen.dart';
 import 'package:untherimeair_flutter/screens/profilUser_screen.dart';
 import 'package:untherimeair_flutter/widgets/generateAnnonce_widget.dart';
-import 'package:untherimeair_flutter/widgets/postJob_widget.dart';
+import 'package:untherimeair_flutter/widgets/postAnnonce_widget.dart';
 import 'package:untherimeair_flutter/widgets/search_widget.dart';
 import 'package:untherimeair_flutter/services/storage_service.dart';
 
@@ -129,7 +129,7 @@ class _HomeScreenState extends State<HomeScreen> {
             return Text('Erreur: ${snapshot.error}');
           } else {
             if (snapshot.data == true) {
-              return const PostJobWidget();
+              return const PostAnnonceWidget();
             } else {
               return Column(
                 children: [
