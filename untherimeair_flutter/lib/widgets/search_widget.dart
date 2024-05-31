@@ -11,7 +11,8 @@ class Search extends StatefulWidget {
 
 class _SearchState extends State<Search> {
   double _distance = 0.0;
-  final _iconWork = const Icon(Icons.work);
+  String _metier = '';
+  String _ville = '';
   final _iconLocationCity = const Icon(Icons.location_city);
   late final _searchFormFieldMetier;
   late final _searchFormFieldVille;
@@ -19,7 +20,7 @@ class _SearchState extends State<Search> {
   @override
   void initState() {
     super.initState();
-    _searchFormFieldMetier = _buildSearchFormField(_iconWork, 'Métier cible');
+    _searchFormFieldMetier = _buildSearchFormField(const Icon(Icons.work), 'Métier cible');
     _searchFormFieldVille = _buildSearchFormField(_iconLocationCity, 'Ville');
   }
 

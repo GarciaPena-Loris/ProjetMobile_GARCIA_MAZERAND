@@ -55,9 +55,6 @@ class _ProfilUserScreenState extends State<ProfilUserScreen> {
           .get();
 
       for (var doc in snapshot.docs) {
-        print("Data:");
-        print(doc.data());
-
         var data = doc.data();
         var annonceRef = data['annonce'] as DocumentReference;
         var annonceSnapshot = await annonceRef.get();
@@ -69,6 +66,54 @@ class _ProfilUserScreenState extends State<ProfilUserScreen> {
       }
     }
     return candidatures;
+  }
+
+  Widget _buildCandidatureStateIcon(String etat) {
+    IconData iconData;
+    Color iconColor;
+    String tooltip;
+
+    switch (etat) {
+      case 'Accepté':
+        iconData = Icons.check_circle;
+        iconColor = Colors.green;
+        tooltip = 'Candidature acceptée';
+        break;
+      case 'Refusé':
+        iconData = Icons.cancel;
+        iconColor = Colors.red;
+        tooltip = 'Candidature refusée';
+        break;
+      case 'Attente':
+        iconData = Icons.access_time;
+        iconColor = Colors.orange;
+        tooltip = 'Candidature en cours';
+        break;
+      default:
+        iconData = Icons.info;
+        iconColor = Colors.grey;
+        tooltip = 'État de la candidature inconnu';
+        break;
+    }
+
+    return Tooltip(
+      message: tooltip,
+      child: Icon(
+        iconData,
+        color: iconColor,
+      ),
+    );
+  }
+
+  Widget _buildPostulationDate(Timestamp? dateDeCandidature) {
+    if (dateDeCandidature != null) {
+      final now = DateTime.now();
+      final difference = now.difference(dateDeCandidature.toDate());
+      final days = difference.inDays;
+      return Text('Postulé il y a $days jours');
+    } else {
+      return const SizedBox.shrink();
+    }
   }
 
   @override
@@ -189,8 +234,8 @@ class _ProfilUserScreenState extends State<ProfilUserScreen> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) =>
-                                          EditProfilePage(utilisateur: utilisateur),
+                                      builder: (context) => EditProfilePage(
+                                          utilisateur: utilisateur),
                                     ),
                                   );
                                 },
@@ -199,9 +244,11 @@ class _ProfilUserScreenState extends State<ProfilUserScreen> {
                               ElevatedButton(
                                 onPressed: () async {
                                   await authService.signOut();
-                                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                                    navigatorKey.currentState!.pushNamedAndRemoveUntil(
-                                        '/home', (Route<dynamic> route) => false);
+                                  WidgetsBinding.instance
+                                      .addPostFrameCallback((_) {
+                                    navigatorKey.currentState!
+                                        .pushNamedAndRemoveUntil('/home',
+                                            (Route<dynamic> route) => false);
                                   });
                                 },
                                 child: const Text('Déconnexion'),
@@ -227,74 +274,85 @@ class _ProfilUserScreenState extends State<ProfilUserScreen> {
                                   : 'Déposez votre CV (pdf)'),
                               trailing: _cvDeposed
                                   ? Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.visibility),
-                                    onPressed: () async {
-                                      try {
-                                        final ref = FirebaseStorage.instance
-                                            .ref('cvs/${FirebaseAuth.instance.currentUser!.uid}.pdf');
-                                        final url = await ref.getDownloadURL();
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        IconButton(
+                                          icon: const Icon(Icons.visibility),
+                                          onPressed: () async {
+                                            try {
+                                              final ref =
+                                                  FirebaseStorage.instance.ref(
+                                                      'cvs/${FirebaseAuth.instance.currentUser!.uid}.pdf');
+                                              final url =
+                                                  await ref.getDownloadURL();
 
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => PdfViewPage(url: url),
-                                          ),
-                                        );
-                                      } catch (e) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                              content: Text(
-                                                  'Erreur de chargement du CV: $e')),
-                                        );
-                                      }
-                                    },
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.clear),
-                                    onPressed: () {
-                                      setState(() {
-                                        _cvDeposed = false;
-                                      });
-                                      _storage
-                                          .ref('cvs/${FirebaseAuth.instance.currentUser!.uid}.pdf')
-                                          .delete();
-                                      FirebaseFirestore.instance
-                                          .collection('utilisateurs')
-                                          .doc(FirebaseAuth.instance.currentUser!.uid)
-                                          .update({'cv': ''});
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      PdfViewPage(url: url),
+                                                ),
+                                              );
+                                            } catch (e) {
+                                              ScaffoldMessenger.of(context)
+                                                  .showSnackBar(
+                                                SnackBar(
+                                                    content: Text(
+                                                        'Erreur de chargement du CV: $e')),
+                                              );
+                                            }
+                                          },
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.clear),
+                                          onPressed: () {
+                                            setState(() {
+                                              _cvDeposed = false;
+                                            });
+                                            _storage
+                                                .ref(
+                                                    'cvs/${FirebaseAuth.instance.currentUser!.uid}.pdf')
+                                                .delete();
+                                            FirebaseFirestore.instance
+                                                .collection('utilisateurs')
+                                                .doc(FirebaseAuth
+                                                    .instance.currentUser!.uid)
+                                                .update({'cv': ''});
 
-                                      const SnackBar(
-                                        content: Text('Cv supprimé'),
-                                        backgroundColor: Colors.red,
-                                      );
-                                    },
-                                  ),
-                                ],
-                              )
+                                            const SnackBar(
+                                              content: Text('Cv supprimé'),
+                                              backgroundColor: Colors.red,
+                                            );
+                                          },
+                                        ),
+                                      ],
+                                    )
                                   : null,
                               onTap: () async {
                                 if (!_cvDeposed) {
                                   FilePickerResult? result =
-                                  await FilePicker.platform.pickFiles(
+                                      await FilePicker.platform.pickFiles(
                                     type: FileType.custom,
                                     allowedExtensions: ['pdf'],
                                   );
 
                                   if (result != null) {
-                                    if (result.files.single.extension == 'pdf') {
+                                    if (result.files.single.extension ==
+                                        'pdf') {
                                       try {
                                         TaskSnapshot snapshot = await _storage
-                                            .ref('cvs/${FirebaseAuth.instance.currentUser!.uid}.pdf')
-                                            .putFile(File(result.files.single.path!));
+                                            .ref(
+                                                'cvs/${FirebaseAuth.instance.currentUser!.uid}.pdf')
+                                            .putFile(File(
+                                                result.files.single.path!));
 
-                                        String downloadURL = await snapshot.ref.getDownloadURL();
+                                        String downloadURL =
+                                            await snapshot.ref.getDownloadURL();
 
                                         await FirebaseFirestore.instance
                                             .collection('utilisateurs')
-                                            .doc(FirebaseAuth.instance.currentUser!.uid)
+                                            .doc(FirebaseAuth
+                                                .instance.currentUser!.uid)
                                             .update({'cv': downloadURL});
 
                                         setState(() {
@@ -302,7 +360,8 @@ class _ProfilUserScreenState extends State<ProfilUserScreen> {
                                         });
 
                                         if (mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
                                             const SnackBar(
                                               content: Text('CV déposé.'),
                                               backgroundColor: Colors.green,
@@ -310,17 +369,21 @@ class _ProfilUserScreenState extends State<ProfilUserScreen> {
                                           );
                                         }
                                       } catch (e) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
                                           SnackBar(
-                                            content: Text('Failed to upload CV. Error: $e'),
+                                            content: Text(
+                                                'Failed to upload CV. Error: $e'),
                                             backgroundColor: Colors.red,
                                           ),
                                         );
                                       }
                                     } else {
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
                                         const SnackBar(
-                                          content: Text('Veuillez sélectionner un fichier PDF.'),
+                                          content: Text(
+                                              'Veuillez sélectionner un fichier PDF.'),
                                           backgroundColor: Colors.red,
                                         ),
                                       );
@@ -344,12 +407,17 @@ class _ProfilUserScreenState extends State<ProfilUserScreen> {
                           FutureBuilder<List<Map<String, dynamic>>>(
                             future: _candidaturesFuture,
                             builder: (context, snapshot) {
-                              if (snapshot.connectionState == ConnectionState.waiting) {
-                                return const Center(child: CircularProgressIndicator());
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return const Center(
+                                    child: CircularProgressIndicator());
                               } else if (snapshot.hasError) {
-                                return Center(child: Text('Erreur: ${snapshot.error}'));
-                              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                                return const Center(child: Text('Aucune candidature trouvée.'));
+                                return Center(
+                                    child: Text('Erreur: ${snapshot.error}'));
+                              } else if (!snapshot.hasData ||
+                                  snapshot.data!.isEmpty) {
+                                return const Center(
+                                    child: Text('Aucune candidature trouvée.'));
                               } else {
                                 var candidatures = snapshot.data!;
                                 return ListView.builder(
@@ -359,12 +427,55 @@ class _ProfilUserScreenState extends State<ProfilUserScreen> {
                                   itemBuilder: (context, index) {
                                     var candidature = candidatures[index];
                                     var annonce = candidature['annonce'];
+
                                     return Card(
                                       child: ListTile(
-                                        title: Text(annonce['titre'] ?? 'Titre de l\'annonce'),
-                                        subtitle: Text(annonce['description'] ?? 'Description de l\'annonce'),
+                                        title: Text(annonce['titre'] ??
+                                            'Titre de l\'annonce'),
+                                        subtitle: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(annonce['description'] ??
+                                                'Description de l\'annonce'),
+                                            const SizedBox(height: 8),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.end,
+                                              children: [
+                                                Row(
+                                                  children: [
+                                                    Text(
+                                                      candidature['etat'] ??
+                                                          'État inconnu',
+                                                      style: const TextStyle(
+                                                        fontSize: 14,
+                                                        color: Colors.black87,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 8),
+                                                    _buildCandidatureStateIcon(
+                                                        candidature['etat'] ??
+                                                            ''),
+                                                  ],
+                                                ),
+                                                const SizedBox(width: 8),
+                                                _buildPostulationDate(
+                                                    candidature[
+                                                        'dateDeCandidature']),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
                                         onTap: () {
-                                          // Handle the card tap, e.g., navigate to the detailed announcement page
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  CandidatureDetailsScreen(
+                                                      candidature: candidature),
+                                            ),
+                                          );
                                         },
                                       ),
                                     );
@@ -373,7 +484,6 @@ class _ProfilUserScreenState extends State<ProfilUserScreen> {
                               }
                             },
                           ),
-
                         ],
                       ),
                     ),
@@ -389,11 +499,13 @@ class _ProfilUserScreenState extends State<ProfilUserScreen> {
                           onPressed: () async {
                             await authService.signOut();
                             WidgetsBinding.instance.addPostFrameCallback((_) {
-                              navigatorKey.currentState!.pushNamedAndRemoveUntil(
-                                  '/home', (Route<dynamic> route) => false);
+                              navigatorKey.currentState!
+                                  .pushNamedAndRemoveUntil(
+                                      '/home', (Route<dynamic> route) => false);
                             });
                           },
-                          child: const Text('Déconnexion'),
+                          child: const Text('Déconnexion',
+                              style: TextStyle(color: Colors.red)),
                         ),
                       ],
                     ),

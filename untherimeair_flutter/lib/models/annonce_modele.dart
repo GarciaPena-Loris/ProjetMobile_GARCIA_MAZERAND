@@ -9,7 +9,7 @@ class Annonce {
   final DateTime datePublication;
   final List<double> emplacement;
   final String metierCible;
-  final int remuneration;
+  final double remuneration;
   final String ville;
   final int amplitudeHoraire;
 
@@ -32,17 +32,32 @@ class Annonce {
     Map data = doc.data() as Map;
     GeoPoint geoPoint = data['emplacement'] as GeoPoint;
     return Annonce(
-      idAnnonce: data['idAnnonce'] ?? 0,
-      idEmployeur: data['idEmployeur'],
-      description: data['description'] ?? '',
-      dateDebut: (data['dateDebut'] as Timestamp).toDate(),
-      dateFin: (data['dateFin'] as Timestamp).toDate(),
-      datePublication: (data['datePublication'] as Timestamp).toDate(),
-      emplacement: [geoPoint.latitude, geoPoint.longitude],
-      metierCible: data['metierCible'] ?? '',
-      remuneration: data['remuneration'] ?? 0,
-      ville: data['ville'] ?? '',
-      amplitudeHoraire: data['amplitudeHoraire'] ?? 0
-    );
+        idAnnonce: data['idAnnonce'] ?? '',
+        idEmployeur: data['idEmployeur'] ?? '',
+        description: data['description'] ?? '',
+        dateDebut: (data['dateDebut'] as Timestamp).toDate(),
+        dateFin: (data['dateFin'] as Timestamp).toDate(),
+        datePublication: (data['datePublication'] as Timestamp).toDate(),
+        emplacement: [geoPoint.latitude, geoPoint.longitude],
+        metierCible: data['metierCible'] ?? '',
+        remuneration: (data['remuneration'] as num).toDouble(),
+        ville: data['ville'] ?? '',
+        amplitudeHoraire: data['amplitudeHoraire'] ?? 0);
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'idAnnonce': idAnnonce,
+      'idEmployeur': idEmployeur,
+      'description': description,
+      'dateDebut': dateDebut,
+      'dateFin': dateFin,
+      'datePublication': datePublication,
+      'emplacement': GeoPoint(emplacement[0], emplacement[1]),
+      'metierCible': metierCible,
+      'remuneration': remuneration,
+      'ville': ville,
+      'amplitudeHoraire': amplitudeHoraire
+    };
   }
 }

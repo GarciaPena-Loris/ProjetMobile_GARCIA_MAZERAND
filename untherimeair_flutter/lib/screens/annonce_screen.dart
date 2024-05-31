@@ -6,10 +6,12 @@ import 'package:untherimeair_flutter/screens/auth_screen.dart';
 import 'package:untherimeair_flutter/services/auth_service.dart';
 
 import '../models/annonce_modele.dart';
+import '../services/storage_service.dart';
 
 class AnnonceScreen extends StatelessWidget {
   final Annonce annonce;
   final AuthService authService = AuthService();
+  final storageService = StorageService();
 
   AnnonceScreen({super.key, required this.annonce});
 
@@ -85,14 +87,57 @@ class AnnonceScreen extends StatelessWidget {
             StreamBuilder<User?>(
               stream: FirebaseAuth.instance.authStateChanges(),
               builder: (context, snapshot) {
-                return ElevatedButton(
-                  onPressed: () {
-                    if (snapshot.hasData) {
-                      // Si l'utilisateur est connecté, implémentez ici la logique pour postuler à l'annonce
-                      print(
-                          'Utilisateur connecté. Implémentez ici la logique pour postuler à l\'annonce.');
-                    } else {
-                      // Si l'utilisateur n'est pas connecté, afficher un message l'invitant à se connecter
+                if (snapshot.hasData) {
+                  return FutureBuilder<bool>(
+                    future: storageService.getEmployeurStatus(),
+                    builder: (context, snapshotEmployeur) {
+                      if (snapshotEmployeur.hasData &&
+                          snapshotEmployeur.data!) {
+                        // Si l'utilisateur est un employeur
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            ElevatedButton(
+                              onPressed: () {
+                                // Ajoutez ici la logique pour modifier l'annonce
+                              },
+                              child: const Text('Modifier annonce'),
+                            ),
+                            const SizedBox(width: 20),
+                            // Ajoutez cette ligne pour ajouter de l'espace entre les boutons
+                            ElevatedButton(
+                              onPressed: () {
+                                // Ajoutez ici la logique pour supprimer l'annonce
+                              },
+                              child: const Text(
+                                'Supprimer annonce',
+                                style: TextStyle(
+                                    color: Colors
+                                        .red), // Change la couleur du texte en rouge
+                              ),
+                            ),
+                          ],
+                        );
+                      } else {
+                        // Si l'utilisateur est un candidat
+                        return ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      ApplyFormPage(annonce: annonce)),
+                            );
+                          },
+                          child: const Text('Postuler à l\'annonce'),
+                        );
+                      }
+                    },
+                  );
+                } else {
+                  // Si l'utilisateur n'est pas connecté
+                  return ElevatedButton(
+                    onPressed: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(

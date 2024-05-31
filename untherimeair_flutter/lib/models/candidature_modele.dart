@@ -35,7 +35,7 @@ class Candidature {
       dateDeCandidature: (data['dateDeCandidature'] as Timestamp).toDate(),
       dateDeNaissanceCandidat: (data['dateDeNaissanceCandidat'] as Timestamp).toDate(),
       etat: data['etat'] ?? '',
-      annonce: data['annonce'] as DocumentReference,
+      annonce: data['annonce'],
       idCandidat: data['idCandidat'] ?? '',
       lettreMotivationCandidat: data['lettreMotivationCandidat'] ?? '',
       nationalite: data['nationalite'] ?? '',
