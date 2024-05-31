@@ -10,11 +10,13 @@ class AuthService {
 
   Future<User?> signIn(String email, String password) async {
     try {
+      print("Email: $email");
       // Utilisation de FirebaseAuth pour l'authentification
       UserCredential result = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
+      print("Data: ${result.user}");
 
       // Vérification si un Employeur existe avec cet email
       DocumentSnapshot userDoc = await _firestore.collection('employeurs').doc(result.user!.uid).get();

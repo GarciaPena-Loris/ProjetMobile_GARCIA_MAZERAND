@@ -268,7 +268,7 @@ class _SignUpFormState extends State<SignUpForm> {
                 controller: _nomController,
                 decoration: const InputDecoration(
                   labelText: 'Nom *',
-                  prefixIcon: Icon(Icons.badge),
+                  prefixIcon: Icon(Icons.perm_identity),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -373,7 +373,7 @@ class _SignUpFormState extends State<SignUpForm> {
                 controller: _nomController,
                 decoration: const InputDecoration(
                   labelText: 'Nom *',
-                  prefixIcon: Icon(Icons.badge),
+                  prefixIcon: Icon(Icons.perm_identity),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -386,7 +386,7 @@ class _SignUpFormState extends State<SignUpForm> {
               TextFormField(
                 controller: _prenomController,
                 decoration: const InputDecoration(
-                    labelText: 'Prénom *', prefixIcon: Icon(Icons.badge)),
+                    labelText: 'Prénom *', prefixIcon: Icon(Icons.person)),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Veuillez entrer votre prénom';

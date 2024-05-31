@@ -26,21 +26,32 @@ class GenerateAdsWidget extends StatelessWidget {
     final adData = _getAdData();
 
     for (int i = 0; i < numberOfAds; i++) {
-      final randomAd = adData.entries.toList()[faker.randomGenerator.integer(adData.length)];
-      final randomDescription = randomAd.value[faker.randomGenerator.integer(randomAd.value.length)];
+      final randomAd =
+          adData.entries.toList()[faker.randomGenerator.integer(adData.length)];
+      final randomDescription =
+          randomAd.value[faker.randomGenerator.integer(randomAd.value.length)];
+
+      // Créer un nouveau document dans la collection 'annonces'
+      final annonceRef = firestore.collection('annonces').doc();
+
       final fakeAd = {
+        'idAnnonce': annonceRef.id,
+        // Utiliser l'ID du document comme ID de l'annonce
         'amplitudeHoraire': faker.randomGenerator.integer(12, min: 4),
-        'dateDebut': Timestamp.fromDate(faker.date.dateTime(minYear: 2024, maxYear: 2025)),
-        'dateFin': Timestamp.fromDate(faker.date.dateTime(minYear: 2024, maxYear: 2025)),
-        'datePublication': Timestamp.fromDate(faker.date.dateTime(minYear: 2023, maxYear: 2024)),
+        'dateDebut': Timestamp.fromDate(
+            faker.date.dateTime(minYear: 2024, maxYear: 2025)),
+        'dateFin': Timestamp.fromDate(
+            faker.date.dateTime(minYear: 2024, maxYear: 2025)),
+        'datePublication': Timestamp.fromDate(
+            faker.date.dateTime(minYear: 2023, maxYear: 2024)),
         'description': randomDescription,
         'emplacement': _generateRandomLocationInFrance(),
-        'idAnnonce': i,
-        'idEmployeur': firestore.collection('employeurs').doc(faker.guid.guid()),
+        'idEmployeur': faker.guid.guid(),
         'metierCible': randomAd.key,
         'remuneration': faker.randomGenerator.integer(100, min: 10),
         'titre': randomAd.key,
-        'ville': faker.address.city(), // Ville fictive pour exemple
+        'ville': faker.address.city(),
+        // Ville fictive pour exemple
       };
 
       await firestore.collection('annonces').add(fakeAd);
@@ -105,8 +116,10 @@ class GenerateAdsWidget extends StatelessWidget {
 
   GeoPoint _generateRandomLocationInFrance() {
     final faker = Faker();
-    double lat = 41.0 + faker.randomGenerator.decimal() * 10.0; // Latitude entre 41.0 et 51.0
-    double lon = -5.0 + faker.randomGenerator.decimal() * 14.0; // Longitude entre -5.0 et 9.0
+    double lat = 41.0 +
+        faker.randomGenerator.decimal() * 10.0; // Latitude entre 41.0 et 51.0
+    double lon = -5.0 +
+        faker.randomGenerator.decimal() * 14.0; // Longitude entre -5.0 et 9.0
     return GeoPoint(lat, lon);
   }
 }

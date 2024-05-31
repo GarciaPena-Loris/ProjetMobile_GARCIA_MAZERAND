@@ -48,7 +48,7 @@ class _ProfilEmployerScreenState extends State<ProfilEmployerScreen> {
                 } else if (snapshot.hasError) {
                   return const Center(
                       child: Text('Erreur de chargement du profil'));
-                } else if (snapshot.hasData) {
+                } else if (snapshot.hasData && snapshot.data!.exists) {
                   var employeurData =
                       snapshot.data!.data() as Map<String, dynamic>;
                   String nom = employeurData['nom'] ?? 'Nom non fourni';
@@ -154,7 +154,14 @@ class _ProfilEmployerScreenState extends State<ProfilEmployerScreen> {
                           children: [
                             ElevatedButton(
                               onPressed: () {
-                                // Logique pour modifier le profil
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        EditEmployerProfilePage(
+                                            employeurData: employeurData),
+                                  ),
+                                );
                               },
                               child: const Text('Modifier le profil'),
                             ),
@@ -222,7 +229,26 @@ class _ProfilEmployerScreenState extends State<ProfilEmployerScreen> {
                     ),
                   );
                 } else {
-                  return const Center(child: Text('Aucun profil trouvé'));
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text('Aucun profil trouvé'),
+                        const SizedBox(height: 16.0),
+                        ElevatedButton(
+                          onPressed: () async {
+                            await authService.signOut();
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              navigatorKey.currentState!
+                                  .pushNamedAndRemoveUntil(
+                                      '/home', (Route<dynamic> route) => false);
+                            });
+                          },
+                          child: const Text('Déconnexion'),
+                        ),
+                      ],
+                    ),
+                  );
                 }
               },
             );

@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Annonce {
-  final int idAnnonce;
-  final DocumentReference idEmployeur;
+  final String idAnnonce;
+  final String idEmployeur;
   final String description;
   final DateTime dateDebut;
   final DateTime dateFin;
@@ -33,7 +33,7 @@ class Annonce {
     GeoPoint geoPoint = data['emplacement'] as GeoPoint;
     return Annonce(
       idAnnonce: data['idAnnonce'] ?? 0,
-      idEmployeur: data['idEmployeur'] as DocumentReference,
+      idEmployeur: data['idEmployeur'],
       description: data['description'] ?? '',
       dateDebut: (data['dateDebut'] as Timestamp).toDate(),
       dateFin: (data['dateFin'] as Timestamp).toDate(),

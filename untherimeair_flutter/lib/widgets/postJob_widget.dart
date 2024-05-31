@@ -63,7 +63,7 @@ class _PostJobWidgetState extends State<PostJobWidget> {
             .height, // Set the height to the screen height
         child: Scaffold(
           appBar: AppBar(
-            title: const Text('Poster une offre'),
+            title: const Text('Poster une nouvelle mission'),
           ),
           body: SingleChildScrollView(
             // Ajout de SingleChildScrollView
@@ -76,7 +76,7 @@ class _PostJobWidgetState extends State<PostJobWidget> {
                     TextFormField(
                       decoration: const InputDecoration(
                           labelText: 'Intitulé de la mission',
-                          prefixIcon: Icon(Icons.title)),
+                          prefixIcon: Icon(Icons.format_quote)),
                       onChanged: (value) {
                         setState(() {
                           missionTitle = value;
@@ -86,7 +86,7 @@ class _PostJobWidgetState extends State<PostJobWidget> {
                     TextFormField(
                       decoration: const InputDecoration(
                           labelText: 'Description',
-                          prefixIcon: Icon(Icons.description)),
+                          prefixIcon: Icon(Icons.newspaper)),
                       onChanged: (value) {
                         setState(() {
                           description = value;
@@ -119,23 +119,25 @@ class _PostJobWidgetState extends State<PostJobWidget> {
                       decoration:
                           const InputDecoration(labelText: 'Amplitude horaire'),
                     ),
+                    const SizedBox(height: 16),
                     InkWell(
                       onTap: () => _choisirDateDebut(context),
                       child: InputDecorator(
-                        decoration: InputDecoration(
-                          labelText: 'Date de début : ${startDate.toLocal()}',
-                          prefixIcon: const Icon(Icons.calendar_today),
+                        decoration: const InputDecoration(
+                          labelText: 'Date de début',
+                          prefixIcon: Icon(Icons.today),
                         ),
                         child: Text(DateFormat('d MMMM yyyy', 'fr_FR')
                             .format(startDate)),
                       ),
                     ),
+                    const SizedBox(height: 16),
                     InkWell(
                       onTap: () => _choisirDateFin(context),
                       child: InputDecorator(
-                        decoration: InputDecoration(
-                          labelText: 'Date de fin : ${endDate.toLocal()}',
-                          prefixIcon: const Icon(Icons.calendar_today),
+                        decoration: const InputDecoration(
+                          labelText: 'Date de fin',
+                          prefixIcon: Icon(Icons.event),
                         ),
                         child: Text(
                             DateFormat('d MMMM yyyy', 'fr_FR').format(endDate)),
@@ -163,7 +165,7 @@ class _PostJobWidgetState extends State<PostJobWidget> {
                             });
                           }
                         },
-                        child: const Text('Poster l\'offre'),
+                        child: const Text('Poster la mission'),
                       ),
                     ),
                   ],

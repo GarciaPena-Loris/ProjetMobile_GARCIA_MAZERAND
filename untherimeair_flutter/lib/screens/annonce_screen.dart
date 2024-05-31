@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:untherimeair_flutter/screens/applyForm_screen.dart';
+import 'package:untherimeair_flutter/screens/auth_screen.dart';
 import 'package:untherimeair_flutter/services/auth_service.dart';
 
 import '../models/annonce_modele.dart';
@@ -92,10 +93,12 @@ class AnnonceScreen extends StatelessWidget {
                           'Utilisateur connecté. Implémentez ici la logique pour postuler à l\'annonce.');
                     } else {
                       // Si l'utilisateur n'est pas connecté, afficher un message l'invitant à se connecter
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text(
-                            'Connectez-vous pour postuler à cette annonce.'),
-                      ));
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) =>
+                            AuthScreen()),
+                      );
                     }
                   },
                   child: Text(snapshot.hasData
