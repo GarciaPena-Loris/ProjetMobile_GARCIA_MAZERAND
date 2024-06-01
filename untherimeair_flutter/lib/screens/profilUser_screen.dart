@@ -24,12 +24,12 @@ class _ProfilUserScreenState extends State<ProfilUserScreen> {
   bool _cvDeposed = false;
   final _storage = FirebaseStorage.instance;
   final AuthService authService = AuthService();
-  late Future<List<Map<String, dynamic>>> _candidaturesFuture;
+  late Stream<List<Map<String, dynamic>>> _candidaturesStream;
 
   @override
   void initState() {
     super.initState();
-    _candidaturesFuture = _loadCandidatures();
+    _candidaturesStream = _loadCandidatures();
   }
 
   String calculerAge(DateTime? dateDeNaissance) {
@@ -46,7 +46,7 @@ class _ProfilUserScreenState extends State<ProfilUserScreen> {
     return age.toString();
   }
 
-  Future<List<Map<String, dynamic>>> _loadCandidatures() async {
+  Stream<List<Map<String, dynamic>>> _loadCandidatures() async* {
     List<Map<String, dynamic>> candidatures = [];
     User? user = FirebaseAuth.instance.currentUser;
 
@@ -54,20 +54,23 @@ class _ProfilUserScreenState extends State<ProfilUserScreen> {
       final snapshot = await FirebaseFirestore.instance
           .collection('candidatures')
           .where('idCandidat', isEqualTo: user.uid)
-          .get();
+          .snapshots();
 
-      for (var doc in snapshot.docs) {
-        var data = doc.data();
-        var annonceRef = data['annonce'] as DocumentReference;
-        var annonceSnapshot = await annonceRef.get();
-        if (annonceSnapshot.exists) {
-          var annonceData = annonceSnapshot.data() as Map<String, dynamic>;
-          data['annonce'] = annonceData;
-          candidatures.add(data);
+      await for (var snap in snapshot) {
+        candidatures = [];
+        for (var doc in snap.docs) {
+          var data = doc.data();
+          var annonceRef = data['annonce'] as DocumentReference;
+          var annonceSnapshot = await annonceRef.get();
+          if (annonceSnapshot.exists) {
+            var annonceData = annonceSnapshot.data() as Map<String, dynamic>;
+            data['annonce'] = annonceData;
+            candidatures.add(data);
+          }
         }
+        yield candidatures;
       }
     }
-    return candidatures;
   }
 
   Widget _buildCandidatureStateIcon(String etat) {
@@ -76,12 +79,12 @@ class _ProfilUserScreenState extends State<ProfilUserScreen> {
     String tooltip;
 
     switch (etat) {
-      case 'Accepté':
+      case 'Acceptee':
         iconData = Icons.check_circle;
         iconColor = Colors.green;
         tooltip = 'Candidature acceptée';
         break;
-      case 'Refusé':
+      case 'Refusee':
         iconData = Icons.cancel;
         iconColor = Colors.red;
         tooltip = 'Candidature refusée';
@@ -90,6 +93,11 @@ class _ProfilUserScreenState extends State<ProfilUserScreen> {
         iconData = Icons.access_time;
         iconColor = Colors.orange;
         tooltip = 'Candidature en cours';
+        break;
+      case 'Validee':
+        iconData = Icons.done;
+        iconColor = Colors.deepPurpleAccent;
+        tooltip = 'Candidature validée';
         break;
       default:
         iconData = Icons.info;
@@ -407,8 +415,8 @@ class _ProfilUserScreenState extends State<ProfilUserScreen> {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          FutureBuilder<List<Map<String, dynamic>>>(
-                            future: _candidaturesFuture,
+                          StreamBuilder<List<Map<String, dynamic>>>(
+                            stream: _loadCandidatures(),
                             builder: (context, snapshot) {
                               if (snapshot.connectionState ==
                                   ConnectionState.waiting) {
@@ -476,7 +484,9 @@ class _ProfilUserScreenState extends State<ProfilUserScreen> {
                                             MaterialPageRoute(
                                               builder: (context) =>
                                                   CandidatureDetailsScreen(
-                                                      candidature: candidature),
+                                                      idCandidature:
+                                                          candidature[
+                                                              'idCandidature']),
                                             ),
                                           );
                                         },

@@ -19,6 +19,8 @@ class CandidatureService {
     required String nationalite,
     required String nomCandidat,
     required String prenomCandidat,
+    required String numeroTelephoneCandidat,
+    required String emailCandidat,
     required File? lettreMotivationFile,
   }) async {
     User? user = _auth.currentUser;
@@ -56,6 +58,8 @@ class CandidatureService {
           nationalite: nationalite,
           nomCandidat: nomCandidat,
           prenomCandidat: prenomCandidat,
+          numeroTelephoneCandidat: numeroTelephoneCandidat,
+          emailCandidat: emailCandidat,
         );
 
         // Ajouter la candidature à Firestore

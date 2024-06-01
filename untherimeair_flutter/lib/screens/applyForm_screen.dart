@@ -29,6 +29,8 @@ class UserData {
   final String lastName;
   final DateTime dateOfBirth;
   final String nationality;
+  final String email;
+  final String phone;
   final String cv;
   final String coverLetter;
 
@@ -37,6 +39,8 @@ class UserData {
     required this.lastName,
     required this.dateOfBirth,
     required this.nationality,
+    this.email = '',
+    this.phone = '',
     required this.cv,
     this.coverLetter = '',
   });
@@ -73,6 +77,8 @@ class _ApplyFormPageState extends State<ApplyFormPage> {
               dateOfBirth:
                   (userDoc.get('dateDeNaissance') as Timestamp).toDate(),
               nationality: userDoc.get('nationalite'),
+              email: userDoc.get('mail'),
+              phone: userDoc.get('telephone'),
               cv: userDoc.get('cv'));
 
           if (_userData!.cv.isNotEmpty) {
@@ -110,6 +116,8 @@ class _ApplyFormPageState extends State<ApplyFormPage> {
           nationalite: formData['nationality'],
           nomCandidat: formData['lastName'],
           prenomCandidat: formData['firstName'],
+          numeroTelephoneCandidat: formData['phone'],
+          emailCandidat: formData['email'],
           lettreMotivationFile: _lmFile,
         );
 
@@ -213,6 +221,30 @@ class _ApplyFormPageState extends State<ApplyFormPage> {
                       validator: FormBuilderValidators.compose([
                         FormBuilderValidators.required(),
                         FormBuilderValidators.maxLength(70),
+                      ]),
+                    ),
+                    FormBuilderTextField(
+                      name: 'email',
+                      decoration: const InputDecoration(
+                          labelText: 'Adresse e-mail',
+                          prefixIcon: Icon(Icons.email)),
+                      initialValue: _userData!.email,
+                      validator: FormBuilderValidators.compose([
+                        FormBuilderValidators.required(),
+                        FormBuilderValidators.email(),
+                      ]),
+                    ),
+                    FormBuilderTextField(
+                      name: 'phone',
+                      decoration: const InputDecoration(
+                          labelText: 'Numéro de téléphone',
+                          prefixIcon: Icon(Icons.phone)),
+                      initialValue: _userData!.phone,
+                      validator: FormBuilderValidators.compose([
+                        FormBuilderValidators.required(),
+                        FormBuilderValidators.numeric(),
+                        FormBuilderValidators.minLength(8),
+                        FormBuilderValidators.maxLength(12),
                       ]),
                     ),
                     const SizedBox(height: 16.0),

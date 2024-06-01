@@ -3,18 +3,20 @@ import 'package:faker/faker.dart';
 import 'package:flutter/material.dart';
 
 class GenerateAdsWidget extends StatelessWidget {
+  const GenerateAdsWidget({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Generate Ads'),
+        title: const Text('Générer des annonces fictives'),
       ),
       body: Center(
         child: ElevatedButton(
           onPressed: () async {
             await generateAndAddAds(10); // Génère et ajoute 10 fausses annonces
           },
-          child: Text('Generate Ads'),
+          child: const Text('Générer des annonces fictives...'),
         ),
       ),
     );
@@ -46,12 +48,10 @@ class GenerateAdsWidget extends StatelessWidget {
             faker.date.dateTime(minYear: 2023, maxYear: 2024)),
         'description': randomDescription,
         'emplacement': _generateRandomLocationInFrance(),
-        'idEmployeur': faker.guid.guid(),
+        'idEmployeur': "JmiHxnQgApStaQZikkZUN29kfTr2",
         'metierCible': randomAd.key,
-        'remuneration': faker.randomGenerator.integer(100, min: 10),
-        'titre': randomAd.key,
+        'remuneration': faker.randomGenerator.integer(30, min: 11),
         'ville': faker.address.city(),
-        // Ville fictive pour exemple
       };
 
       await firestore.collection('annonces').add(fakeAd);

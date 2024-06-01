@@ -24,7 +24,7 @@ class _ProfilEmployerScreenState extends State<ProfilEmployerScreen> {
     await launchUrl(uri);
   }
 
-  Future<int> _getCandidatureCount(String annonceId) async {
+  Future<int> _getAttenteCandidatureCount(String annonceId) async {
     DocumentReference annonceRef =
         FirebaseFirestore.instance.collection('annonces').doc(annonceId);
     QuerySnapshot query = await FirebaseFirestore.instance
@@ -42,41 +42,55 @@ class _ProfilEmployerScreenState extends State<ProfilEmployerScreen> {
             isEqualTo: FirebaseFirestore.instance
                 .collection('annonces')
                 .doc(annonceId))
+        .where('etat', isEqualTo: 'Acceptee')
+        .get();
+    return query.docs.length;
+  }
+
+  Future<int> _getValidatedCandidatureCount(String annonceId) async {
+    QuerySnapshot query = await FirebaseFirestore.instance
+        .collection('candidatures')
+        .where('annonce',
+            isEqualTo: FirebaseFirestore.instance
+                .collection('annonces')
+                .doc(annonceId))
         .where('etat', isEqualTo: 'Validee')
         .get();
     return query.docs.length;
   }
 
-  Future<List<AnnonceWithCounts>> _fetchAnnoncesWithCounts(
-      List<DocumentSnapshot> docs) async {
+  Stream<List<AnnonceWithCounts>> _fetchAnnoncesWithCountsStream(
+      List<DocumentSnapshot> docs) async* {
     List<AnnonceWithCounts> annoncesWithCounts = [];
-
     for (var doc in docs) {
       var annonce = Annonce.fromFirestore(doc);
-      int candidatureCount = await _getCandidatureCount(annonce.idAnnonce);
+      int attenteCandidatureCount = await _getAttenteCandidatureCount(annonce.idAnnonce);
       int acceptedCandidatureCount =
           await _getAcceptedCandidatureCount(annonce.idAnnonce);
+      int validatedCandidatureCount =
+          await _getValidatedCandidatureCount(annonce.idAnnonce);
       annoncesWithCounts.add(
         AnnonceWithCounts(
           annonce: annonce,
-          candidatureCount: candidatureCount,
+          attenteCandidatureCount: attenteCandidatureCount,
           acceptedCandidatureCount: acceptedCandidatureCount,
+          validatedCandidatureCount: validatedCandidatureCount,
         ),
       );
     }
-
     // Trier les annonces
     annoncesWithCounts.sort((a, b) {
-      if (a.acceptedCandidatureCount != b.acceptedCandidatureCount) {
-        return b.acceptedCandidatureCount - a.acceptedCandidatureCount;
-      } else if (a.candidatureCount != b.candidatureCount) {
-        return b.candidatureCount - a.candidatureCount;
+      if (a.attenteCandidatureCount != b.attenteCandidatureCount) {
+        return b.attenteCandidatureCount.compareTo(a.attenteCandidatureCount);
+      } else if (a.acceptedCandidatureCount != b.acceptedCandidatureCount) {
+        return b.acceptedCandidatureCount.compareTo(a.acceptedCandidatureCount);
+      } else if (a.validatedCandidatureCount != b.validatedCandidatureCount) {
+        return b.validatedCandidatureCount.compareTo(a.validatedCandidatureCount);
       } else {
         return b.annonce.datePublication.compareTo(a.annonce.datePublication);
       }
     });
-
-    return annoncesWithCounts;
+    yield annoncesWithCounts;
   }
 
   @override
@@ -159,17 +173,6 @@ class _ProfilEmployerScreenState extends State<ProfilEmployerScreen> {
                                 const SizedBox(width: 8),
                                 Text(
                                   adresseEntreprise,
-                                  style: const TextStyle(fontSize: 16),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                const Icon(Icons.phone_enabled),
-                                const SizedBox(width: 8),
-                                Text(
-                                  telephoneEntreprise,
                                   style: const TextStyle(fontSize: 16),
                                 ),
                               ],
@@ -263,20 +266,21 @@ class _ProfilEmployerScreenState extends State<ProfilEmployerScreen> {
                                 } else if (snapshot.hasData) {
                                   final docs = snapshot.data!.docs;
 
-                                  return FutureBuilder<List<AnnonceWithCounts>>(
-                                    future: _fetchAnnoncesWithCounts(docs),
-                                    builder: (context, futureSnapshot) {
-                                      if (futureSnapshot.connectionState ==
+                                  return StreamBuilder<List<AnnonceWithCounts>>(
+                                    stream:
+                                        _fetchAnnoncesWithCountsStream(docs),
+                                    builder: (context, snapshot) {
+                                      if (snapshot.connectionState ==
                                           ConnectionState.waiting) {
                                         return const Center(
                                             child: CircularProgressIndicator());
-                                      } else if (futureSnapshot.hasError) {
+                                      } else if (snapshot.hasError) {
                                         return const Center(
                                             child: Text(
                                                 'Erreur de chargement des candidatures'));
-                                      } else if (futureSnapshot.hasData) {
+                                      } else if (snapshot.hasData) {
                                         final annoncesWithCounts =
-                                            futureSnapshot.data!;
+                                            snapshot.data!;
                                         return ListView.builder(
                                           shrinkWrap: true,
                                           itemCount: annoncesWithCounts.length,
@@ -297,13 +301,13 @@ class _ProfilEmployerScreenState extends State<ProfilEmployerScreen> {
                                                 title:
                                                     Text(annonce.metierCible),
                                                 subtitle: Text(
-                                                    'Posté il y a $difference jours'),
+                                                    'Posté il y a $difference jour(s)'),
                                                 trailing: Row(
                                                   mainAxisSize:
                                                       MainAxisSize.min,
                                                   children: [
                                                     if (annonceWithCounts
-                                                            .acceptedCandidatureCount >
+                                                            .validatedCandidatureCount >
                                                         0)
                                                       Row(
                                                         children: [
@@ -314,21 +318,43 @@ class _ProfilEmployerScreenState extends State<ProfilEmployerScreen> {
                                                           const SizedBox(
                                                               width: 4),
                                                           Text(
-                                                              '${annonceWithCounts.acceptedCandidatureCount}'),
+                                                              '${annonceWithCounts.validatedCandidatureCount}'),
                                                         ],
-                                                      ),
-                                                    const SizedBox(width: 8),
-                                                    Icon(
-                                                      Icons.notifications,
-                                                      color: annonceWithCounts
-                                                                  .candidatureCount >
-                                                              1
-                                                          ? Colors.orange
-                                                          : Colors.grey,
-                                                    ),
-                                                    const SizedBox(width: 4),
-                                                    Text(
-                                                        '${annonceWithCounts.candidatureCount}'),
+                                                      )
+                                                    else ...[
+                                                      if (annonceWithCounts
+                                                              .attenteCandidatureCount >
+                                                          0)
+                                                        Row(
+                                                          children: [
+                                                            const Icon(
+                                                                Icons
+                                                                    .notifications,
+                                                                color: Colors
+                                                                    .orange),
+                                                            const SizedBox(
+                                                                width: 4),
+                                                            Text(
+                                                                '${annonceWithCounts.attenteCandidatureCount}'),
+                                                          ],
+                                                        ),
+                                                      if (annonceWithCounts
+                                                              .acceptedCandidatureCount >
+                                                          0)
+                                                        Row(
+                                                          children: [
+                                                            const Icon(
+                                                                Icons
+                                                                    .access_time,
+                                                                color: Colors
+                                                                    .orangeAccent),
+                                                            const SizedBox(
+                                                                width: 4),
+                                                            Text(
+                                                                '${annonceWithCounts.acceptedCandidatureCount}'),
+                                                          ],
+                                                        ),
+                                                    ]
                                                   ],
                                                 ),
                                                 onTap: () {
@@ -401,12 +427,14 @@ class _ProfilEmployerScreenState extends State<ProfilEmployerScreen> {
 
 class AnnonceWithCounts {
   final Annonce annonce;
-  final int candidatureCount;
+  final int attenteCandidatureCount;
   final int acceptedCandidatureCount;
+  final int validatedCandidatureCount;
 
   AnnonceWithCounts({
     required this.annonce,
-    required this.candidatureCount,
+    required this.attenteCandidatureCount,
     required this.acceptedCandidatureCount,
+    required this.validatedCandidatureCount,
   });
 }

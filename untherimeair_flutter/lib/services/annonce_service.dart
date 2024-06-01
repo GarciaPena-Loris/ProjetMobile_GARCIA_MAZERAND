@@ -1,13 +1,36 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:untherimeair_flutter/models/annonce_modele.dart';
+import 'package:rxdart/rxdart.dart';
 
 class AnnonceService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
+  Stream<List<String>> getAppliedAnnonces(String userId) {
+    return _db.collection('candidatures')
+        .where('idCandidat', isEqualTo: userId)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => (doc['annonce'] as DocumentReference).id).toList());
+  }
+
   // Stream of annonces
-  Stream<List<Annonce>> getAnnonces() {
-    return _db.collection('annonces').snapshots().map((snapshot) =>
-        snapshot.docs.map((doc) => Annonce.fromFirestore(doc)).toList());
+  Stream<List<Annonce>> getAnnonces([String? userId]) {
+    if (userId != null) {
+      // Si un ID utilisateur est fourni, renvoyez uniquement les annonces auxquelles l'utilisateur n'a pas postulé
+      return Rx.combineLatest2(
+          _db.collection('annonces').snapshots(),
+          getAppliedAnnonces(userId),
+              (QuerySnapshot annonceSnapshot, List<String> appliedAnnonces) {
+            return annonceSnapshot.docs
+                .where((doc) => !appliedAnnonces.contains(doc.id))
+                .map((doc) => Annonce.fromFirestore(doc))
+                .toList();
+          }
+      );
+    } else {
+      // Si aucun ID utilisateur n'est fourni, renvoyez toutes les annonces
+      return _db.collection('annonces').snapshots().map((snapshot) =>
+          snapshot.docs.map((doc) => Annonce.fromFirestore(doc)).toList());
+    }
   }
 
   Future<Annonce?> ajouterAnnonce({

@@ -27,15 +27,18 @@ class AnnonceScreen extends StatelessWidget {
 
   void _deleteAnnonce(BuildContext context) async {
     try {
+      Navigator.pop(context);
       await FirebaseFirestore.instance
           .collection('annonces')
           .doc(idAnnonce)
           .delete();
-      Navigator.pop(context);
+      if (Navigator.canPop(context)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Annonce supprimée')),
+        );
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur lors de la suppression: $e')),
-      );
+      print('Erreur lors de la suppression de l\'annonce: $e');
     }
   }
 
@@ -116,6 +119,18 @@ class AnnonceScreen extends StatelessWidget {
                   const SizedBox(height: 8.0),
                   _buildDetailItem(
                       Icons.attach_money, '${annonce.remuneration} €/heure'),
+                  const SizedBox(height: 8.0),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Divider(),
+                  ),
+                  const SizedBox(height: 8.0),
+
+                  // Date de publication
+                  _buildDetailItem(
+                    Icons.edit_calendar,
+                    'Publiée le ${DateFormat('dd MMMM yyyy', 'fr_FR').format(annonce.datePublication)} (${DateTime.now().difference(annonce.datePublication).inDays} jour(s))',
+                  ),
                   const SizedBox(height: 16.0),
 
                   // Boutons
@@ -146,7 +161,7 @@ class AnnonceScreen extends StatelessWidget {
                                     },
                                     child: const Text('Modifier annonce'),
                                   ),
-                                  const SizedBox(width: 20),
+                                  const SizedBox(width: 8),
                                   ElevatedButton(
                                     onPressed: () => _deleteAnnonce(context),
                                     child: const Text(
@@ -222,10 +237,12 @@ class AnnonceScreen extends StatelessWidget {
 
                             // Sinon, afficher la liste
                             return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start, // Aligne le titre à gauche
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              // Aligne le titre à gauche
                               children: [
                                 const SizedBox(height: 16.0),
-                                const Divider(), // Ajoute un Divider avant "Candidatures"
+                                const Divider(),
+                                // Ajoute un Divider avant "Candidatures"
                                 const SizedBox(height: 16.0),
                                 const Text(
                                   'Candidatures',
@@ -250,6 +267,8 @@ class AnnonceScreen extends StatelessWidget {
                                         .inDays;
                                     return Card(
                                       child: ListTile(
+                                        leading: _buildCandidatureStateIcon(
+                                            candidature['etat']),
                                         title: Text(
                                             '${candidature['nomCandidat']} ${candidature['prenomCandidat']}'),
                                         subtitle: Text(
@@ -262,7 +281,9 @@ class AnnonceScreen extends StatelessWidget {
                                             MaterialPageRoute(
                                               builder: (context) =>
                                                   CandidatureDetailsScreen(
-                                                      candidature: candidature),
+                                                      idCandidature:
+                                                          candidature[
+                                                              'idCandidature']),
                                             ),
                                           );
                                         },
@@ -284,6 +305,45 @@ class AnnonceScreen extends StatelessWidget {
             ),
           );
         });
+  }
+
+  Widget _buildCandidatureStateIcon(String etat) {
+    IconData iconData;
+    Color iconColor;
+    String tooltip;
+
+    switch (etat) {
+      case 'Acceptee':
+        iconData = Icons.check_circle;
+        iconColor = Colors.green;
+        tooltip = 'Candidature acceptée';
+        break;
+      case 'Refusee':
+        iconData = Icons.cancel;
+        iconColor = Colors.red;
+        tooltip = 'Candidature refusée';
+        break;
+      case 'Attente':
+        iconData = Icons.access_time;
+        iconColor = Colors.orange;
+        tooltip = 'Candidature en cours';
+        break;
+      case 'Validee':
+        iconData = Icons.done;
+        iconColor = Colors.deepPurpleAccent;
+        tooltip = 'Candidature validée';
+        break;
+      default:
+        iconData = Icons.info;
+        iconColor = Colors.grey;
+        tooltip = 'État de la candidature inconnu';
+        break;
+    }
+
+    return Tooltip(
+      message: tooltip,
+      child: Icon(iconData, color: iconColor),
+    );
   }
 
   Widget _buildDetailItem(IconData icon, String value) {

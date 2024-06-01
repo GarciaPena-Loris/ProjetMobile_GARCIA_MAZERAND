@@ -12,6 +12,8 @@ class Candidature {
   final String nationalite;
   final String nomCandidat;
   final String prenomCandidat;
+  final String numeroTelephoneCandidat;
+  final String emailCandidat;
 
   Candidature({
     required this.idCandidature,
@@ -25,6 +27,8 @@ class Candidature {
     required this.nationalite,
     required this.nomCandidat,
     required this.prenomCandidat,
+    required this.numeroTelephoneCandidat,
+    required this.emailCandidat,
   });
 
   factory Candidature.fromFirestore(DocumentSnapshot doc) {
@@ -41,6 +45,8 @@ class Candidature {
       nationalite: data['nationalite'] ?? '',
       nomCandidat: data['nomCandidat'] ?? '',
       prenomCandidat: data['prenomCandidat'] ?? '',
+      numeroTelephoneCandidat: data['numeroTelephoneCandidat'] ?? '',
+      emailCandidat: data['emailCandidat'] ?? '',
     );
   }
 
@@ -51,12 +57,14 @@ class Candidature {
       'dateDeCandidature': dateDeCandidature,
       'dateDeNaissanceCandidat': dateDeNaissanceCandidat,
       'etat': etat,
-      'idAnnonce': annonce,
+      'annonce': annonce,
       'idCandidat': idCandidat,
       'lettreMotivationCandidat': lettreMotivationCandidat,
       'nationalite': nationalite,
       'nomCandidat': nomCandidat,
       'prenomCandidat': prenomCandidat,
+      'numeroTelephoneCandidat': numeroTelephoneCandidat,
+      'emailCandidat': emailCandidat,
     };
   }
 }
