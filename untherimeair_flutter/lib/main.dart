@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:untherimeair_flutter/screens/home_screen.dart';
 import 'package:untherimeair_flutter/widgets/generateAnnonce_widget.dart';
@@ -13,6 +14,8 @@ void main() async {
   await Firebase.initializeApp();
   await FlutterDownloader.initialize(debug: true);
   await initializeDateFormatting('fr_FR', null);
+  await Geolocator.requestPermission();
+
   runApp(const MyApp());
 }
 

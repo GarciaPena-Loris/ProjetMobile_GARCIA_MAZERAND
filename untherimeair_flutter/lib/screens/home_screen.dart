@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'dart:math';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:untherimeair_flutter/screens/profilEmployer_screen.dart';
 import 'package:untherimeair_flutter/screens/profilUser_screen.dart';
 import 'package:untherimeair_flutter/widgets/generateAnnonce_widget.dart';
@@ -12,6 +15,7 @@ import 'package:untherimeair_flutter/services/storage_service.dart';
 import '../models/annonce_modele.dart';
 import '../services/annonce_service.dart';
 import '../widgets/annonce_widget.dart';
+import 'package:geocoding/geocoding.dart';
 
 import 'auth_screen.dart';
 
@@ -21,8 +25,16 @@ class HomeScreen extends StatefulWidget {
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
+class Coordinates {
+  final double latitude;
+  final double longitude;
+
+  Coordinates({required this.latitude, required this.longitude});
+}
+
 
 class _HomeScreenState extends State<HomeScreen> {
+  List<DocumentSnapshot> _annonces = [];
   final AnnonceService _annonceService = AnnonceService();
   final StorageService _storageService = StorageService();
 
@@ -37,12 +49,18 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+
+
+
+
+
   void _cancelLongPressTimer() {
     if (_longPressTimer != null) {
       _longPressTimer!.cancel();
       _longPressTimer = null;
     }
   }
+
 
   Future<bool> getEmployeurStatus() async {
     return await _storageService.getEmployeurStatus();
@@ -74,7 +92,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     } else {
                       if (snapshot.data == true) {
                         return TextButton.icon(
-                          icon: const Icon(Icons.person), // Icône d'utilisateur
+                          icon: const Icon(Icons.person),
+                          // Icône d'utilisateur
                           label: const Text('Profil'),
                           onPressed: () {
                             Navigator.push(
@@ -87,7 +106,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         );
                       } else {
                         return TextButton.icon(
-                          icon: const Icon(Icons.person), // Icône d'utilisateur
+                          icon: const Icon(Icons.person),
+                          // Icône d'utilisateur
                           label: const Text('Profil'),
                           onPressed: () {
                             Navigator.push(
@@ -142,16 +162,15 @@ class _HomeScreenState extends State<HomeScreen> {
                           // Icône de recherche
                           label: const Text('Rechercher'),
                           onPressed: () {
-                            WidgetsBinding.instance
-                                .addPostFrameCallback((_) {
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
                               showModalBottomSheet(
                                 context: context,
                                 isScrollControlled: true,
                                 builder: (context) => FractionallySizedBox(
                                   heightFactor: 0.7,
                                   child: Search(
-                                    onSearch: (arg1, arg2, arg3) {
-                                      // Ajoutez la logique de recherche ici
+                                    onSearch: (metier, ville, distance) {
+
                                     },
                                   ),
                                 ),
@@ -170,8 +189,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: CircularProgressIndicator());
                         } else if (snapshot.hasError) {
                           return const Center(
-                              child:
-                              Text('Erreur de chargement des annonces'));
+                              child: Text('Erreur de chargement des annonces'));
                         } else {
                           List<Annonce> annonces = snapshot.data ?? [];
                           return ListView.builder(

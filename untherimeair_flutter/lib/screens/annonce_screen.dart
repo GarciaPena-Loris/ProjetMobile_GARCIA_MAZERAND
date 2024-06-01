@@ -117,7 +117,6 @@ class AnnonceScreen extends StatelessWidget {
                   _buildDetailItem(
                       Icons.attach_money, '${annonce.remuneration} €/heure'),
                   const SizedBox(height: 16.0),
-                  const Divider(),
 
                   // Boutons
                   StreamBuilder<User?>(
@@ -196,70 +195,84 @@ class AnnonceScreen extends StatelessWidget {
                   StreamBuilder<User?>(
                     stream: FirebaseAuth.instance.authStateChanges(),
                     builder: (context, snapshot) {
-                      if (snapshot.hasData && snapshot.data!.uid == annonce.idEmployeur) {
-                        return Column(
-                          children: [
-                            const SizedBox(height: 16.0),
-                            const Text(
-                              'Candidatures',
-                              style: TextStyle(
-                                fontSize: 20.0,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 8.0),
-                            StreamBuilder<QuerySnapshot>(
-                              stream: FirebaseFirestore.instance
-                                  .collection('candidatures')
-                                  .where('annonce',
+                      if (snapshot.hasData &&
+                          snapshot.data!.uid == annonce.idEmployeur) {
+                        return StreamBuilder<QuerySnapshot>(
+                          stream: FirebaseFirestore.instance
+                              .collection('candidatures')
+                              .where('annonce',
                                   isEqualTo: FirebaseFirestore.instance
                                       .collection('annonces')
                                       .doc(annonce.idAnnonce))
-                                  .snapshots(),
-                              builder: (context, snapshot) {
-                                if (!snapshot.hasData) {
-                                  return const Center(child: CircularProgressIndicator());
-                                }
+                              .snapshots(),
+                          builder: (context, snapshot) {
+                            // Pendant le chargement
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Center(
+                                  child: CircularProgressIndicator());
+                            }
 
-                                return Expanded(
-                                  child: ListView.builder(
-                                    itemCount: snapshot.data!.docs.length,
-                                    itemBuilder: (context, index) {
-                                      Map<String, dynamic> candidature =
-                                      snapshot.data!.docs[index].data()
-                                      as Map<String, dynamic>;
-                                      DateTime dateDeCandidature =
-                                      (candidature['dateDeCandidature'] as Timestamp)
-                                          .toDate();
-                                      int difference = DateTime.now()
-                                          .difference(dateDeCandidature)
-                                          .inDays;
+                            // S'il n'y a pas de candidature
+                            if (snapshot.data!.docs.isEmpty) {
+                              return const Center(
+                                  child: Text(
+                                      'Aucune candidature pour cette annonce'));
+                            }
 
-                                      return Card(
-                                        child: ListTile(
-                                          title: Text(
-                                              '${candidature['nomCandidat']} ${candidature['prenomCandidat']}'),
-                                          subtitle:
-                                          Text('Postulé il y a $difference jours'),
-                                          trailing: const Icon(Icons.remove_red_eye),
-                                          onTap: () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    CandidatureDetailsScreen(
-                                                        candidature: candidature),
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      );
-                                    },
+                            // Sinon, afficher la liste
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start, // Aligne le titre à gauche
+                              children: [
+                                const SizedBox(height: 16.0),
+                                const Divider(), // Ajoute un Divider avant "Candidatures"
+                                const SizedBox(height: 16.0),
+                                const Text(
+                                  'Candidatures',
+                                  style: TextStyle(
+                                    fontSize: 20.0,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                );
-                              },
-                            ),
-                          ],
+                                ),
+                                const SizedBox(height: 8.0),
+                                ListView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  itemCount: snapshot.data!.docs.length,
+                                  itemBuilder: (context, index) {
+                                    Map<String, dynamic> candidature =
+                                        snapshot.data!.docs[index].data()
+                                            as Map<String, dynamic>;
+                                    final difference = DateTime.now()
+                                        .difference(
+                                            candidature['dateDeCandidature']
+                                                .toDate())
+                                        .inDays;
+                                    return Card(
+                                      child: ListTile(
+                                        title: Text(
+                                            '${candidature['nomCandidat']} ${candidature['prenomCandidat']}'),
+                                        subtitle: Text(
+                                            'Postulé il y a $difference jours'),
+                                        trailing:
+                                            const Icon(Icons.remove_red_eye),
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  CandidatureDetailsScreen(
+                                                      candidature: candidature),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ],
+                            );
+                          },
                         );
                       } else {
                         return Container(); // Retourne un conteneur vide si l'utilisateur n'est pas l'employeur de l'annonce
