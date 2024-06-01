@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class Search extends StatefulWidget {
@@ -14,14 +15,10 @@ class _SearchState extends State<Search> {
   String _metier = '';
   String _ville = '';
   final _iconLocationCity = const Icon(Icons.location_city);
-  late final _searchFormFieldMetier;
-  late final _searchFormFieldVille;
 
   @override
   void initState() {
     super.initState();
-    _searchFormFieldMetier = _buildSearchFormField(const Icon(Icons.work), 'Métier cible');
-    _searchFormFieldVille = _buildSearchFormField(_iconLocationCity, 'Ville');
   }
 
   @override
@@ -42,8 +39,16 @@ class _SearchState extends State<Search> {
             'Sélectionnez vos critères de recherche :',
             style: TextStyle(fontSize: 12.0, color: Colors.grey),
           ),
-          _searchFormFieldMetier,
-          _searchFormFieldVille,
+          _buildSearchFormField(const Icon(Icons.work), 'Métier cible', (value) {
+            setState(() {
+              _metier = value;
+            });
+          }),
+          _buildSearchFormField(_iconLocationCity, 'Ville', (value) {
+            setState(() {
+              _ville = value;
+            });
+          }),
           const SizedBox(height: 16.0),
           Row(
             children: [
@@ -54,7 +59,7 @@ class _SearchState extends State<Search> {
                   value: _distance,
                   min: 0.0,
                   max: 100.0,
-                  divisions: 150,
+                  divisions: 100,
                   label: 'Distance: ${_distance.round()} km',
                   onChanged: (value) {
                     setState(() {
@@ -76,7 +81,7 @@ class _SearchState extends State<Search> {
               ),
               ElevatedButton(
                 onPressed: () {
-                  widget.onSearch('métier', 'ville', _distance);
+                  widget.onSearch(_metier, _ville, _distance);
                   Navigator.pop(context);
                 },
                 child: const Text('Rechercher'),
@@ -88,7 +93,7 @@ class _SearchState extends State<Search> {
     );
   }
 
-  Widget _buildSearchFormField(Icon icon, String labelText) {
+  Widget _buildSearchFormField(Icon icon, String labelText, Function(String) onChanged) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
@@ -100,6 +105,7 @@ class _SearchState extends State<Search> {
               decoration: InputDecoration(
                 labelText: labelText,
               ),
+              onChanged: onChanged,
             ),
           ),
         ],

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:untherimeair_flutter/models/utilisateur_modele.dart';
+import 'package:untherimeair_flutter/screens/editEmployerProfile_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../main.dart';
 import '../models/annonce_modele.dart';
@@ -45,6 +45,38 @@ class _ProfilEmployerScreenState extends State<ProfilEmployerScreen> {
         .where('etat', isEqualTo: 'Validee')
         .get();
     return query.docs.length;
+  }
+
+  Future<List<AnnonceWithCounts>> _fetchAnnoncesWithCounts(
+      List<DocumentSnapshot> docs) async {
+    List<AnnonceWithCounts> annoncesWithCounts = [];
+
+    for (var doc in docs) {
+      var annonce = Annonce.fromFirestore(doc);
+      int candidatureCount = await _getCandidatureCount(annonce.idAnnonce);
+      int acceptedCandidatureCount =
+          await _getAcceptedCandidatureCount(annonce.idAnnonce);
+      annoncesWithCounts.add(
+        AnnonceWithCounts(
+          annonce: annonce,
+          candidatureCount: candidatureCount,
+          acceptedCandidatureCount: acceptedCandidatureCount,
+        ),
+      );
+    }
+
+    // Trier les annonces
+    annoncesWithCounts.sort((a, b) {
+      if (a.acceptedCandidatureCount != b.acceptedCandidatureCount) {
+        return b.acceptedCandidatureCount - a.acceptedCandidatureCount;
+      } else if (a.candidatureCount != b.candidatureCount) {
+        return b.candidatureCount - a.candidatureCount;
+      } else {
+        return b.annonce.datePublication.compareTo(a.annonce.datePublication);
+      }
+    });
+
+    return annoncesWithCounts;
   }
 
   @override
@@ -214,11 +246,11 @@ class _ProfilEmployerScreenState extends State<ProfilEmployerScreen> {
                               ),
                             ),
                             const SizedBox(height: 8),
-                            FutureBuilder<QuerySnapshot>(
-                              future: FirebaseFirestore.instance
+                            StreamBuilder<QuerySnapshot>(
+                              stream: FirebaseFirestore.instance
                                   .collection('annonces')
                                   .where('idEmployeur', isEqualTo: user.uid)
-                                  .get(),
+                                  .snapshots(),
                               builder: (context, snapshot) {
                                 if (snapshot.connectionState ==
                                     ConnectionState.waiting) {
@@ -229,84 +261,102 @@ class _ProfilEmployerScreenState extends State<ProfilEmployerScreen> {
                                       child: Text(
                                           'Erreur de chargement des annonces'));
                                 } else if (snapshot.hasData) {
-                                  final annonces = snapshot.data!.docs;
-                                  return ListView.builder(
-                                    shrinkWrap: true,
-                                    itemCount: annonces.length,
-                                    itemBuilder: (context, index) {
-                                      var annonce = Annonce.fromFirestore(
-                                          annonces[index]);
-                                      var datePublication =
-                                          annonce.datePublication;
-                                      var now = DateTime.now();
-                                      var difference = now
-                                          .difference(datePublication)
-                                          .inDays;
+                                  final docs = snapshot.data!.docs;
 
-                                      return FutureBuilder<List<int>>(
-                                        future: Future.wait([
-                                          _getCandidatureCount(
-                                              annonce.idAnnonce),
-                                          _getAcceptedCandidatureCount(
-                                              annonce.idAnnonce),
-                                        ]),
-                                        builder: (context, snapshot) {
-                                          if (!snapshot.hasData) {
-                                            return const CircularProgressIndicator();
-                                          }
+                                  return FutureBuilder<List<AnnonceWithCounts>>(
+                                    future: _fetchAnnoncesWithCounts(docs),
+                                    builder: (context, futureSnapshot) {
+                                      if (futureSnapshot.connectionState ==
+                                          ConnectionState.waiting) {
+                                        return const Center(
+                                            child: CircularProgressIndicator());
+                                      } else if (futureSnapshot.hasError) {
+                                        return const Center(
+                                            child: Text(
+                                                'Erreur de chargement des candidatures'));
+                                      } else if (futureSnapshot.hasData) {
+                                        final annoncesWithCounts =
+                                            futureSnapshot.data!;
+                                        return ListView.builder(
+                                          shrinkWrap: true,
+                                          itemCount: annoncesWithCounts.length,
+                                          itemBuilder: (context, index) {
+                                            var annonceWithCounts =
+                                                annoncesWithCounts[index];
+                                            var annonce =
+                                                annonceWithCounts.annonce;
+                                            var datePublication =
+                                                annonce.datePublication;
+                                            var now = DateTime.now();
+                                            var difference = now
+                                                .difference(datePublication)
+                                                .inDays;
 
-                                          int candidatureCount =
-                                              snapshot.data![0];
-                                          int acceptedCandidatureCount =
-                                              snapshot.data![1];
-
-                                          return Card(
-                                            child: ListTile(
-                                              title: Text(annonce.metierCible),
-                                              subtitle: Text(
-                                                  'Posté il y a $difference jours'),
-                                              trailing: Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  if (acceptedCandidatureCount >
-                                                      0)
-                                                    Row(
-                                                      children: [
-                                                        const Icon(Icons.how_to_reg,
-                                                            color:
-                                                                Colors.green),
-                                                        const SizedBox(width: 4),
-                                                        Text(
-                                                            '$acceptedCandidatureCount'),
-                                                      ],
+                                            return Card(
+                                              child: ListTile(
+                                                title:
+                                                    Text(annonce.metierCible),
+                                                subtitle: Text(
+                                                    'Posté il y a $difference jours'),
+                                                trailing: Row(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    if (annonceWithCounts
+                                                            .acceptedCandidatureCount >
+                                                        0)
+                                                      Row(
+                                                        children: [
+                                                          const Icon(
+                                                              Icons.how_to_reg,
+                                                              color:
+                                                                  Colors.green),
+                                                          const SizedBox(
+                                                              width: 4),
+                                                          Text(
+                                                              '${annonceWithCounts.acceptedCandidatureCount}'),
+                                                        ],
+                                                      ),
+                                                    const SizedBox(width: 8),
+                                                    Icon(
+                                                      Icons.notifications,
+                                                      color: annonceWithCounts
+                                                                  .candidatureCount >
+                                                              1
+                                                          ? Colors.orange
+                                                          : Colors.grey,
                                                     ),
-                                                  const SizedBox(width: 8),
-                                                  Icon(Icons.notifications, color: candidatureCount > 1 ? Colors.orange : Colors.grey),
-                                                  const SizedBox(width: 4),
-                                                  Text('$candidatureCount'),
-                                                ],
+                                                    const SizedBox(width: 4),
+                                                    Text(
+                                                        '${annonceWithCounts.candidatureCount}'),
+                                                  ],
+                                                ),
+                                                onTap: () {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          AnnonceScreen(
+                                                        idAnnonce:
+                                                            annonce.idAnnonce,
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
                                               ),
-                                              onTap: () {
-                                                Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        AnnonceScreen(
-                                                      annonce:
-                                                          Annonce.fromFirestore(
-                                                              annonces[index]),
-                                                    ),
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                          );
-                                        },
-                                      );
+                                            );
+                                          },
+                                        );
+                                      } else {
+                                        return const Center(
+                                            child:
+                                                Text('Aucune annonce trouvée'));
+                                      }
                                     },
                                   );
                                 } else {
-                                  return const Text('Aucune annonce trouvée');
+                                  return const Center(
+                                      child: Text('Aucune annonce trouvée'));
                                 }
                               },
                             ),
@@ -347,4 +397,16 @@ class _ProfilEmployerScreenState extends State<ProfilEmployerScreen> {
       ),
     );
   }
+}
+
+class AnnonceWithCounts {
+  final Annonce annonce;
+  final int candidatureCount;
+  final int acceptedCandidatureCount;
+
+  AnnonceWithCounts({
+    required this.annonce,
+    required this.candidatureCount,
+    required this.acceptedCandidatureCount,
+  });
 }

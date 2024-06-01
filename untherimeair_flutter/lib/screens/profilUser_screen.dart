@@ -10,6 +10,8 @@ import 'package:untherimeair_flutter/models/utilisateur_modele.dart';
 import '../main.dart';
 import '../services/auth_service.dart';
 import '../widgets/pdfView_widget.dart';
+import 'candidatureDetails_screen.dart';
+import 'editProfil_screen.dart';
 
 class ProfilUserScreen extends StatefulWidget {
   const ProfilUserScreen({super.key});
@@ -251,7 +253,8 @@ class _ProfilUserScreenState extends State<ProfilUserScreen> {
                                             (Route<dynamic> route) => false);
                                   });
                                 },
-                                child: const Text('Déconnexion'),
+                                child: const Text('Déconnexion',
+                                    style: TextStyle(color: Colors.red)),
                               ),
                             ],
                           ),

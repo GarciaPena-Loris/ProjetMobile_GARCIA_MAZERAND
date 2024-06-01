@@ -15,7 +15,7 @@ class AnnonceWidget extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => AnnonceScreen(annonce: annonce),
+            builder: (context) => AnnonceScreen(idAnnonce: annonce.idAnnonce),
           ),
         );
       },

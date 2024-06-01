@@ -120,7 +120,6 @@ class _EditAnnonceScreenState extends State<EditAnnonceScreen> {
       _formKey.currentState!.save();
 
       // Récupérer les coordonnées de la ville
-      print(_villeController.text);
       bool coordinatesFound = await _getCoordinates(_villeController.text);
       if (!coordinatesFound) {
         return;
